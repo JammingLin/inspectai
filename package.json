@@ -4,8 +4,5 @@
   "type": "module",
   "dependencies": {
     "pdfkit": "^0.15.0"
-  },
-  "devDependencies": {
-    "wrangler": "^3.0.0"
   }
 }

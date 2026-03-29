@@ -1,0 +1,9 @@
+{
+  "name": "inspectai-mvp",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "pdfkit": "^0.15.0",
+    "@vercel/node": "^3.0.0"
+  }
+}

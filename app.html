@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InspectAI — Create Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080c10; --bg2: #0d1117; --surface: #111820; --border: #1e2d3d;
+      --accent: #00d4ff; --accent2: #00ff9d; --warn: #ff6b35; --text: #e2e8f0; --muted: #64748b;
+      --font-display: 'Outfit', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-display); overflow-x: hidden; min-height: 100vh; }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px; pointer-events: none; z-index: 0;
+    }
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between; padding: 20px 48px;
+      background: rgba(8,12,16,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+    }
+    .logo { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
+    .logo span { color: var(--accent2); }
+    nav a { font-family: var(--font-mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 1px; text-transform: uppercase; transition: color 0.2s; }
+    nav a:hover { color: var(--accent); }
+    .container { max-width: 1200px; margin: 0 auto; padding: 120px 24px 60px; position: relative; z-index: 1; }
+    h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+    .subtitle { color: var(--muted); font-size: 16px; margin-bottom: 32px; }
+    
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: 12px; padding: 60px 24px;
+      text-align: center; background: var(--surface); cursor: pointer; transition: all 0.2s;
+      margin-bottom: 32px;
+    }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: rgba(0,212,255,0.05); }
+    .upload-icon { font-size: 48px; margin-bottom: 16px; }
+    .upload-text { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+    .upload-hint { font-size: 14px; color: var(--muted); font-family: var(--font-mono); }
+    #fileInput { display: none; }
+    
+    /* Photo Grid */
+    .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .photo-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+      position: relative; transition: border-color 0.2s;
+    }
+    .photo-card:hover { border-color: var(--accent); }
+    .photo-card img { width: 100%; height: 150px; object-fit: cover; display: block; }
+    .photo-card .remove {
+      position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); border: none;
+      color: white; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .photo-card .remove:hover { background: var(--warn); }
+    .photo-card .analyzing {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex;
+      align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; color: var(--accent);
+    }
+    
+    /* Analysis Results */
+    .results { display: none; }
+    .results.active { display: block; }
+    .result-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px;
+      margin-bottom: 16px; display: grid; grid-template-columns: 120px 1fr; gap: 20px;
+    }
+    .result-card img { width: 120px; height: 120px; object-fit: cover; border-radius: 8px; }
+    .result-content { display: flex; flex-direction: column; gap: 12px; }
+    .result-header { display: flex; align-items: center; gap: 12px; }
+    .issue-badge {
+      padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      font-family: var(--font-mono); text-transform: uppercase;
+    }
+    .issue-badge.critical { background: rgba(255,107,53,0.2); color: var(--warn); }
+    .issue-badge.moderate { background: rgba(255,193,7,0.2); color: #ffc107; }
+    .issue-badge.minor { background: rgba(0,255,157,0.2); color: var(--accent2); }
+    .result-description {
+      width: 100%; padding: 12px; background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: var(--font-display); font-size: 14px;
+      line-height: 1.6; resize: vertical; min-height: 80px;
+    }
+    .result-description:focus { outline: none; border-color: var(--accent); }
+    .result-meta { display: flex; gap: 16px; font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+    
+    /* Actions */
+    .actions { display: flex; gap: 16px; margin-top: 32px; }
+    .btn {
+      padding: 14px 28px; border-radius: 8px; font-family: var(--font-mono); font-size: 14px;
+      font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+      border: none; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,212,255,0.3); }
+    .btn-secondary {
+      background: transparent; border: 1px solid var(--accent); color: var(--accent);
+    }
+    .btn-secondary:hover { background: var(--accent); color: var(--bg); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    
+    /* Loading */
+    .loading { display: none; text-align: center; padding: 40px; }
+    .loading.active { display: block; }
+    .spinner {
+      width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* Empty State */
+    .empty-state { text-align: center; padding: 60px 24px; color: var(--muted); }
+    .empty-state-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">Inspect<span>AI</span></div>
+    <div class="nav-links">
+      <a href="index.html">← Back to Landing</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Create New Report</h1>
+    <p class="subtitle">Upload photos of property issues. AI will analyze and generate professional descriptions.</p>
+    
+    <!-- Upload Zone -->
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-icon">📸</div>
+      <div class="upload-text">Drop photos here or click to upload</div>
+      <div class="upload-hint">Supports: JPG, PNG, WEBP (Max 10 photos, 5MB each)</div>
+      <input type="file" id="fileInput" accept="image/*" multiple />
+    </div>
+    
+    <!-- Photo Grid -->
+    <div class="photo-grid" id="photoGrid"></div>
+    
+    <!-- Analyze Button -->
+    <div class="actions" id="analyzeActions" style="display: none;">
+      <button class="btn btn-primary" id="analyzeBtn">🤖 Analyze Photos with AI</button>
+      <button class="btn btn-secondary" id="clearBtn">Clear All</button>
+    </div>
+    
+    <!-- Loading -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div style="color: var(--muted); font-family: var(--font-mono);">AI is analyzing your photos...</div>
+    </div>
+    
+    <!-- Results -->
+    <div class="results" id="results">
+      <h2 style="margin: 32px 0 20px; font-size: 24px;">Analysis Results</h2>
+      <div id="resultsList"></div>
+      
+      <div class="actions">
+        <button class="btn btn-primary" id="exportPdfBtn">📄 Export PDF Report</button>
+        <button class="btn btn-secondary" id="newReportBtn">Start New Report</button>
+      </div>
+    </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-state-icon">📋</div>
+      <div>No photos uploaded yet. Start by uploading photos above.</div>
+    </div>
+  </div>
+
+  <script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const photoGrid = document.getElementById('photoGrid');
+    const analyzeActions = document.getElementById('analyzeActions');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const loading = document.getElementById('loading');
+    const results = document.getElementById('results');
+    const resultsList = document.getElementById('resultsList');
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const newReportBtn = document.getElementById('newReportBtn');
+    const emptyState = document.getElementById('emptyState');
+    
+    let photos = [];
+    
+    // Upload handlers
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+    
+    function handleFiles(files) {
+      const newPhotos = Array.from(files).slice(0, 10 - photos.length).map(file => ({
+        file,
+        id: Date.now() + Math.random(),
+        src: URL.createObjectURL(file),
+        analyzing: false,
+        result: null
+      }));
+      photos.push(...newPhotos);
+      renderPhotos();
+    }
+    
+    function renderPhotos() {
+      photoGrid.innerHTML = photos.map(photo => `
+        <div class="photo-card" data-id="${photo.id}">
+          <img src="${photo.src}" alt="Upload" />
+          <button class="remove" onclick="removePhoto(${photo.id})">×</button>
+          ${photo.analyzing ? '<div class="analyzing">⏳ Analyzing...</div>' : ''}
+        </div>
+      `).join('');
+      
+      if (photos.length > 0) {
+        analyzeActions.style.display = 'flex';
+        emptyState.style.display = 'none';
+      } else {
+        analyzeActions.style.display = 'none';
+        emptyState.style.display = 'block';
+        results.classList.remove('active');
+      }
+    }
+    
+    window.removePhoto = (id) => {
+      photos = photos.filter(p => p.id !== id);
+      renderPhotos();
+    };
+    
+    clearBtn.addEventListener('click', () => {
+      photos = [];
+      renderPhotos();
+      results.classList.remove('active');
+    });
+    
+    newReportBtn.addEventListener('click', () => {
+      photos = [];
+      renderPhotos();
+      results.classList.remove('active');
+    });
+    
+    // Analyze
+    analyzeBtn.addEventListener('click', async () => {
+      loading.classList.add('active');
+      analyzeActions.style.display = 'none';
+      
+      try {
+        // Upload images and get base64
+        const imagePromises = photos.map(async (photo) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(photo.file);
+          return new Promise((resolve) => {
+            reader.onload = () => resolve({ id: photo.id, base64: reader.result });
+          });
+        });
+        const imageData = await Promise.all(imagePromises);
+        
+        // Call AI analysis API
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ images: imageData })
+        });
+        
+        if (!response.ok) throw new Error('Analysis failed');
+        
+        const results = await response.json();
+        
+        // Update photos with results
+        photos = photos.map(photo => {
+          const result = results.find(r => r.id === photo.id);
+          return { ...photo, analyzing: false, result };
+        });
+        
+        renderResults();
+      } catch (error) {
+        console.error('Analysis error:', error);
+        alert('Analysis failed. Please try again.');
+        analyzeActions.style.display = 'flex';
+      }
+      
+      loading.classList.remove('active');
+    });
+    
+    function renderResults() {
+      resultsList.innerHTML = photos.filter(p => p.result).map(photo => `
+        <div class="result-card">
+          <img src="${photo.src}" alt="Analysis" />
+          <div class="result-content">
+            <div class="result-header">
+              <span class="issue-badge ${photo.result.severity}">${photo.result.severity}</span>
+              <strong>${photo.result.issue}</strong>
+            </div>
+            <textarea class="result-description" data-id="${photo.id}">${photo.result.description}</textarea>
+            <div class="result-meta">
+              <span>Confidence: ${Math.round(photo.result.confidence * 100)}%</span>
+              <span>Location: ${photo.result.location || 'Not specified'}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      results.classList.add('active');
+      
+      // Save edited descriptions
+      document.querySelectorAll('.result-description').forEach(textarea => {
+        textarea.addEventListener('input', (e) => {
+          const photo = photos.find(p => p.id === parseFloat(e.target.dataset.id));
+          if (photo) photo.result.description = e.target.value;
+        });
+      });
+    }
+    
+    // Export PDF
+    exportPdfBtn.addEventListener('click', async () => {
+      const analyzedPhotos = photos.filter(p => p.result);
+      if (analyzedPhotos.length === 0) return;
+      
+      const reportData = analyzedPhotos.map(p => ({
+        image: p.src,
+        issue: p.result.issue,
+        severity: p.result.severity,
+        description: p.result.description,
+        confidence: p.result.confidence
+      }));
+      
+      const response = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report: reportData })
+      });
+      
+      if (!response.ok) {
+        alert('PDF export failed');
+        return;
+      }
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `inspection-report-${Date.now()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>

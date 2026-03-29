@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "name": "inspectai-landing",
+  "builds": [
+    { "src": "api/**/*.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ],
+  "env": {
+    "MAILCHIMP_API_KEY": "@mailchimp-api-key",
+    "MAILCHIMP_AUDIENCE_ID": "@mailchimp-audience-id"
+  }
+}

@@ -3,14 +3,7 @@
 
 import PDFDocument from 'pdfkit';
 
-export const config = {
-  runtime: 'nodejs',
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
-};
+// Node.js runtime (auto-detected by Vercel)
 
 export default async function handler(req) {
   const headers = {

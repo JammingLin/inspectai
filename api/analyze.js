@@ -1,9 +1,7 @@
 // Vercel Serverless Function - AI Image Analysis
 // Uses Qwen-VL for visual recognition
 
-export const config = {
-  runtime: 'nodejs',
-};
+// Node.js runtime (auto-detected by Vercel)
 
 export default async function handler(req) {
   const headers = {

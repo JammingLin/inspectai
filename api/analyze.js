@@ -2,7 +2,7 @@
 // Uses Qwen-VL for visual recognition
 
 export const config = {
-  runtime: 'edge',
+  runtime: 'nodejs',
 };
 
 export default async function handler(req) {

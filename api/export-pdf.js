@@ -4,7 +4,7 @@
 import PDFDocument from 'pdfkit';
 
 export const config = {
-  runtime: 'edge',
+  runtime: 'nodejs',
   api: {
     bodyParser: {
       sizeLimit: '10mb',

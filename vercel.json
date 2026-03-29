@@ -5,5 +5,10 @@
     { "source": "/app", "destination": "/app.html" },
     { "source": "/app.html", "destination": "/app.html" },
     { "source": "/(.*)", "destination": "/$1" }
-  ]
+  ],
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
 }

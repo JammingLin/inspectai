@@ -40,8 +40,8 @@ export default async function handler(req) {
 }
 
 async function analyzeImage(base64Image) {
-  // Call Qwen-VL API for image analysis
-  const API_KEY = 'sk-xxxxx'; // TODO: Set in Vercel env
+  // Call Qwen-VL API (Alibaba Cloud - works in China)
+  const API_KEY = process.env.QWEN_API_KEY;
   const API_URL = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
 
   const prompt = `You are a professional home inspection expert. Analyze this property photo and identify any issues.

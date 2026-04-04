@@ -40,6 +40,32 @@
     .btn-login:hover { background: var(--accent2); }
     .btn-logout { font-family: var(--font-mono); font-size: 10px; padding: 4px 10px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.2s; }
     .btn-logout:hover { color: var(--warn); border-color: var(--warn); }
+    
+    /* Toast Notification */
+    .toast-container { position: fixed; top: 80px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .toast {
+      pointer-events: auto; display: flex; align-items: center; gap: 10px; padding: 14px 20px;
+      border-radius: 10px; font-family: var(--font-mono); font-size: 13px; color: var(--text);
+      backdrop-filter: blur(16px); border: 1px solid var(--border);
+      transform: translateX(120%); opacity: 0; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .toast.show { transform: translateX(0); opacity: 1; }
+    .toast.hide { transform: translateX(120%); opacity: 0; }
+    .toast-success { background: rgba(0,255,157,0.1); border-color: rgba(0,255,157,0.3); }
+    .toast-success .toast-icon { color: var(--accent2); }
+    .toast-error { background: rgba(255,107,53,0.1); border-color: rgba(255,107,53,0.3); }
+    .toast-error .toast-icon { color: var(--warn); }
+    .toast-info { background: rgba(0,212,255,0.1); border-color: rgba(0,212,255,0.3); }
+    .toast-info .toast-icon { color: var(--accent); }
+    .toast-icon { font-size: 18px; flex-shrink: 0; }
+    .toast-body { flex: 1; }
+    .toast-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+    .toast-msg { font-size: 11px; color: var(--muted); }
+    .toast-progress { position: absolute; bottom: 0; left: 0; height: 2px; border-radius: 0 0 10px 10px; }
+    .toast-success .toast-progress { background: var(--accent2); }
+    .toast-error .toast-progress { background: var(--warn); }
+    .toast-info .toast-progress { background: var(--accent); }
     .container { max-width: 1200px; margin: 0 auto; padding: 120px 24px 60px; position: relative; z-index: 1; }
     h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
     .subtitle { color: var(--muted); font-size: 16px; margin-bottom: 32px; }
@@ -266,8 +292,8 @@
     <div class="logo">Inspect<span>AI</span></div>
     <div class="nav-right">
       <div class="nav-links">
-        <a href="reports.html">My Reports</a>
-        <a href="index.html">← Back to Landing</a>
+        <a href="reports.html">我的报告</a>
+        <a href="index.html">← 返回首页</a>
       </div>
       <!-- Auth Area -->
       <div id="authArea">
@@ -277,24 +303,24 @@
   </nav>
 
   <div class="container">
-    <h1>Create New Report</h1>
-    <p class="subtitle">Upload photos of property issues. AI will analyze and generate professional descriptions.</p>
+    <h1>创建新报告</h1>
+    <p class="subtitle">上传房屋照片，AI 将自动分析并生成专业检测描述。</p>
     
     <!-- Property Info Form -->
     <div class="property-form" id="propertyForm">
       <div class="form-row">
         <div class="form-group">
-          <label for="propertyAddress">Property Address</label>
+          <label for="propertyAddress">房屋地址</label>
           <input type="text" id="propertyAddress" placeholder="123 Main St, City, State 12345" />
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label for="inspectorName">Inspector Name</label>
+          <label for="inspectorName">检测员姓名</label>
           <input type="text" id="inspectorName" placeholder="John Smith" />
         </div>
         <div class="form-group">
-          <label for="inspectionDate">Inspection Date</label>
+          <label for="inspectionDate">检测日期</label>
           <input type="date" id="inspectionDate" />
         </div>
       </div>
@@ -303,7 +329,7 @@
     <!-- Progress Bar -->
     <div class="progress-container" id="progressContainer">
       <div class="progress-header">
-        <div class="progress-title">⏳ Analyzing Photos...</div>
+        <div class="progress-title">⏳ 正在分析照片...</div>
         <div class="progress-count" id="progressCount">0 / 0</div>
       </div>
       <div class="progress-bar">
@@ -314,15 +340,15 @@
     
     <!-- Retry Container -->
     <div class="retry-container" id="retryContainer">
-      <div class="retry-text">⚠️ Analysis failed. Network error or API timeout.</div>
-      <button class="btn-retry" id="retryBtn">🔄 Try Again</button>
+      <div class="retry-text">⚠️ 分析失败，网络错误或 API 超时。</div>
+      <button class="btn-retry" id="retryBtn">🔄 重试</button>
     </div>
     
     <!-- Upload Zone -->
     <div class="upload-zone" id="uploadZone">
       <div class="upload-icon">📸</div>
-      <div class="upload-text">Drop photos here or click to upload</div>
-      <div class="upload-hint">Supports: JPG, PNG, WEBP (Max 10 photos, 5MB each)</div>
+      <div class="upload-text">拖拽照片到此处，或点击上传</div>
+      <div class="upload-hint">支持：JPG、PNG、WEBP（最多 10 张，每张不超过 5MB）</div>
       <input type="file" id="fileInput" accept="image/*" multiple />
     </div>
     
@@ -331,36 +357,65 @@
     
     <!-- Analyze Button -->
     <div class="actions" id="analyzeActions" style="display: none;">
-      <button class="btn btn-primary" id="analyzeBtn">🤖 Analyze Photos with AI</button>
-      <button class="btn btn-secondary" id="clearBtn">Clear All</button>
+      <button class="btn btn-primary" id="analyzeBtn">🤖 AI 分析照片</button>
+      <button class="btn btn-secondary" id="clearBtn">清空全部</button>
     </div>
     
     <!-- Loading -->
     <div class="loading" id="loading">
       <div class="spinner"></div>
-      <div style="color: var(--muted); font-family: var(--font-mono);">AI is analyzing your photos...</div>
+      <div style="color: var(--muted); font-family: var(--font-mono);">AI 正在分析您的照片...</div>
     </div>
     
     <!-- Results -->
     <div class="results" id="results">
-      <h2 style="margin: 32px 0 20px; font-size: 24px;">Analysis Results</h2>
+      <h2 style="margin: 32px 0 20px; font-size: 24px;">分析结果</h2>
       <div id="resultsList"></div>
       
       <div class="actions">
-        <button class="btn btn-primary" id="exportPdfBtn">📄 Export PDF</button>
-        <button class="btn btn-secondary" id="saveReportBtn">💾 Save to Cloud</button>
-        <button class="btn btn-secondary" id="newReportBtn">Start New</button>
+        <button class="btn btn-primary" id="exportPdfBtn">📄 导出 PDF</button>
+        <button class="btn btn-secondary" id="saveReportBtn">💾 保存报告</button>
+        <button class="btn btn-secondary" id="newReportBtn">新建报告</button>
       </div>
     </div>
     
     <!-- Empty State -->
     <div class="empty-state" id="emptyState">
       <div class="empty-state-icon">📋</div>
-      <div>No photos uploaded yet. Start by uploading photos above.</div>
+      <div>还没有上传照片，请先在上方上传照片。</div>
     </div>
   </div>
 
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
   <script>
+    // ===== Toast Notification =====
+    function showToast(title, msg, type = 'success', duration = 3500) {
+      const container = document.getElementById('toastContainer');
+      const icons = { success: '✓', error: '✗', info: 'ℹ' };
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || '✓'}</span>
+        <div class="toast-body">
+          <div class="toast-title">${title}</div>
+          ${msg ? `<div class="toast-msg">${msg}</div>` : ''}
+        </div>
+        <div class="toast-progress" style="width:100%;transition:width ${duration}ms linear"></div>
+      `;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.add('show');
+        toast.querySelector('.toast-progress').style.width = '0%';
+      });
+      setTimeout(() => {
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 400);
+      }, duration);
+    }
+
     // ===== Google Auth =====
     const GOOGLE_CLIENT_ID = '704297205823-9rvnb5vrpauc32tii5js3qmr94t8kktl.apps.googleusercontent.com';
     let currentUser = null;
@@ -527,7 +582,7 @@
         <div class="photo-card" data-id="${photo.id}">
           <img src="${photo.src}" alt="Upload" />
           <button class="remove" onclick="removePhoto(${photo.id})">×</button>
-          ${photo.analyzing ? '<div class="analyzing">⏳ Analyzing...</div>' : ''}
+          ${photo.analyzing ? '<div class="analyzing">⏳ 分析中...</div>' : ''}
         </div>
       `).join('');
       
@@ -589,7 +644,7 @@
         const results = [];
         for (let i = 0; i < imageData.length; i++) {
           const img = imageData[i];
-          updateProgress(i + 1, imageData.length, `Analyzing photo ${i + 1} of ${imageData.length}...`);
+          updateProgress(i + 1, imageData.length, `正在分析第 ${i + 1}/${imageData.length} 张照片...`);
           
           try {
             const response = await fetch('/api/analyze', {
@@ -611,7 +666,7 @@
             // Add placeholder result for failed image
             results.push({
               id: img.id,
-              issue: 'Analysis Failed',
+              issue: '分析失败',
               severity: 'minor',
               description: 'Unable to analyze this image. Please try again or upload a clearer photo.',
               confidence: 0,
@@ -642,9 +697,9 @@
         if (retryCount < MAX_RETRIES) {
           retryCount++;
           retryContainer.classList.add('active');
-          document.querySelector('.retry-text').textContent = `⚠️ Analysis failed. ${MAX_RETRIES - retryCount + 1} retry attempts remaining.`;
+          document.querySelector('.retry-text').textContent = `⚠️ 分析失败，还剩 ${MAX_RETRIES - retryCount + 1} 次重试机会。`;
         } else {
-          alert('Analysis failed after multiple attempts. Please check your connection and try again.');
+          showToast('分析失败', '多次尝试后仍然失败，请检查网络连接后重试。', 'error', 5000);
           analyzeActions.style.display = 'flex';
         }
       }
@@ -720,12 +775,12 @@
     saveReportBtn.addEventListener('click', async () => {
       const analyzedPhotos = photos.filter(p => p.result);
       if (analyzedPhotos.length === 0) {
-        alert('Please analyze photos before saving.');
+        showToast('提示', '请先分析照片后再保存。', 'info');
         return;
       }
       
       saveReportBtn.disabled = true;
-      saveReportBtn.textContent = '⏳ Saving...';
+      saveReportBtn.textContent = '⏳ 保存中...';
       
       try {
         const reportData = analyzedPhotos.map(p => ({
@@ -757,15 +812,15 @@
         const db = await openDatabase();
         await saveReportToDB(db, report);
         
-        alert(`✓ Report saved successfully!\n\nReport ID: ${reportId}\n\nView it in "My Reports" page.`);
+        showToast('保存成功', `报告 ID: ${reportId}，可在「我的报告」页面查看。`, 'success', 4000);
         
       } catch (error) {
         console.error('Save error:', error);
-        alert('Failed to save report: ' + error.message);
+        showToast('保存失败', error.message, 'error');
       }
       
       saveReportBtn.disabled = false;
-      saveReportBtn.textContent = '💾 Save Report';
+      saveReportBtn.textContent = '💾 保存报告';
     });
     
     // IndexedDB helpers
@@ -799,11 +854,11 @@
       if (analyzedPhotos.length === 0) return;
       
       exportPdfBtn.disabled = true;
-      exportPdfBtn.textContent = '⏳ Generating PDF...';
+      exportPdfBtn.textContent = '⏳ 正在生成 PDF...';
       
       try {
         if (!window.jspdf || !window.jspdf.jsPDF) {
-          alert('PDF library failed to load. Please refresh and try again.');
+          showToast('加载失败', 'PDF 库未加载，请刷新页面后重试。', 'error');
           return;
         }
         const { jsPDF } = window.jspdf;
@@ -942,10 +997,10 @@
         doc.save(`inspection-report-${Date.now()}.pdf`);
       } catch (err) {
         console.error('PDF export error:', err);
-        alert('PDF export failed: ' + err.message);
+        showToast('导出失败', err.message, 'error');
       } finally {
         exportPdfBtn.disabled = false;
-        exportPdfBtn.textContent = '📄 Export PDF';
+        exportPdfBtn.textContent = '📄 导出 PDF';
       }
     });
   </script>

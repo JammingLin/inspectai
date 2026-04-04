@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>InspectAI — Create Report</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <style>
@@ -682,41 +683,156 @@
       });
     }
     
-    // Export PDF
+    // Export PDF (client-side with jsPDF)
     exportPdfBtn.addEventListener('click', async () => {
       const analyzedPhotos = photos.filter(p => p.result);
       if (analyzedPhotos.length === 0) return;
       
-      const reportData = analyzedPhotos.map(p => ({
-        issue: p.result.issue,
-        severity: p.result.severity,
-        description: p.result.description,
-        confidence: p.result.confidence,
-        location: p.result.location,
-        recommendation: p.result.recommendation
-      }));
+      exportPdfBtn.disabled = true;
+      exportPdfBtn.textContent = '⏳ Generating PDF...';
       
-      const response = await fetch('/api/export-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          report: reportData,
-          propertyInfo: propertyInfo
-        })
-      });
-      
-      if (!response.ok) {
-        alert('PDF export failed');
-        return;
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const contentW = pageW - margin * 2;
+        
+        // Cover Page
+        doc.setFontSize(32);
+        doc.setTextColor(0, 212, 255);
+        doc.text('InspectAI', pageW / 2, 60, { align: 'center' });
+        
+        doc.setFontSize(16);
+        doc.setTextColor(30, 41, 59);
+        doc.text('Property Inspection Report', pageW / 2, 80, { align: 'center' });
+        
+        const info = propertyInfo || {};
+        doc.setFontSize(12);
+        doc.setTextColor(60, 60, 60);
+        let cy = 110;
+        doc.text(`Property: ${info.address || 'Not specified'}`, pageW / 2, cy, { align: 'center' });
+        cy += 8;
+        doc.text(`Inspector: ${info.inspectorName || 'Not specified'}`, pageW / 2, cy, { align: 'center' });
+        cy += 8;
+        doc.text(`Date: ${info.inspectionDate ? new Date(info.inspectionDate).toLocaleDateString() : new Date().toLocaleDateString()}`, pageW / 2, cy, { align: 'center' });
+        
+        cy += 20;
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Report Generated: ${new Date().toLocaleDateString()}`, pageW / 2, cy, { align: 'center' });
+        cy += 6;
+        doc.text(`Total Issues Found: ${analyzedPhotos.length}`, pageW / 2, cy, { align: 'center' });
+        
+        cy += 30;
+        doc.setFontSize(9);
+        doc.text('This report was generated with AI assistance.', pageW / 2, cy, { align: 'center' });
+        cy += 5;
+        doc.text('All findings should be verified by a qualified home inspector.', pageW / 2, cy, { align: 'center' });
+        
+        // Summary Page
+        doc.addPage();
+        let y = margin;
+        
+        doc.setFontSize(20);
+        doc.setTextColor(30, 41, 59);
+        doc.text('Summary', margin, y);
+        y += 12;
+        
+        const reportData = analyzedPhotos.map(p => p.result);
+        const critical = reportData.filter(r => r.severity === 'critical').length;
+        const moderate = reportData.filter(r => r.severity === 'moderate').length;
+        const minor = reportData.filter(r => r.severity === 'minor').length;
+        
+        doc.setFontSize(12);
+        doc.setTextColor(255, 107, 53);
+        doc.text(`• Critical Issues: ${critical}`, margin + 10, y); y += 7;
+        doc.setTextColor(255, 193, 7);
+        doc.text(`• Moderate Issues: ${moderate}`, margin + 10, y); y += 7;
+        doc.setTextColor(0, 255, 157);
+        doc.text(`• Minor Issues: ${minor}`, margin + 10, y); y += 15;
+        
+        // Detailed Findings
+        doc.setFontSize(20);
+        doc.setTextColor(30, 41, 59);
+        doc.text('Detailed Findings', margin, y);
+        y += 12;
+        
+        reportData.forEach((item, index) => {
+          // Check page break
+          if (y > pageH - 50) {
+            doc.addPage();
+            y = margin;
+          }
+          
+          // Severity badge
+          const sevColors = { critical: [255,107,53], moderate: [255,193,7], minor: [0,255,157] };
+          const sc = sevColors[item.severity] || sevColors.moderate;
+          doc.setFontSize(9);
+          doc.setTextColor(sc[0], sc[1], sc[2]);
+          doc.text((item.severity || 'unknown').toUpperCase(), margin, y);
+          
+          // Issue title
+          doc.setFontSize(13);
+          doc.setTextColor(30, 41, 59);
+          const titleLines = doc.splitTextToSize(item.issue || 'Unknown Issue', contentW - 30);
+          doc.text(titleLines, margin + 30, y);
+          y += titleLines.length * 6 + 2;
+          
+          // Location
+          if (item.location) {
+            doc.setFontSize(9);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Location: ${item.location}`, margin + 30, y);
+            y += 5;
+          }
+          
+          // Description
+          if (item.description) {
+            doc.setFontSize(10);
+            doc.setTextColor(100, 116, 139);
+            const descLines = doc.splitTextToSize(item.description, contentW - 30);
+            if (y + descLines.length * 5 > pageH - 30) { doc.addPage(); y = margin; }
+            doc.text(descLines, margin + 30, y);
+            y += descLines.length * 5 + 2;
+          }
+          
+          // Recommendation
+          if (item.recommendation) {
+            doc.setFontSize(9);
+            doc.setTextColor(0, 212, 255);
+            const recLines = doc.splitTextToSize(`Recommendation: ${item.recommendation}`, contentW - 30);
+            if (y + recLines.length * 4.5 > pageH - 30) { doc.addPage(); y = margin; }
+            doc.text(recLines, margin + 30, y);
+            y += recLines.length * 4.5 + 2;
+          }
+          
+          // Confidence
+          if (item.confidence) {
+            doc.setFontSize(8);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Confidence: ${Math.round(item.confidence * 100)}%`, margin + 30, y);
+            y += 5;
+          }
+          
+          y += 8;
+        });
+        
+        // Footer on last page
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        doc.text('© 2026 InspectAI. This report is for informational purposes only.', pageW / 2, pageH - 10, { align: 'center' });
+        
+        // Save
+        doc.save(`inspection-report-${Date.now()}.pdf`);
+      } catch (err) {
+        console.error('PDF export error:', err);
+        alert('PDF export failed: ' + err.message);
+      } finally {
+        exportPdfBtn.disabled = false;
+        exportPdfBtn.textContent = '📄 Export PDF';
       }
-      
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `inspection-report-${Date.now()}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
     });
   </script>
 </body>

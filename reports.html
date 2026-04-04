@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>InspectAI — My Reports</title>
+  <title>InspectAI — 我的报告</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -32,132 +34,108 @@
     .container { max-width: 1200px; margin: 0 auto; padding: 120px 24px 60px; position: relative; z-index: 1; }
     h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
     .subtitle { color: var(--muted); font-size: 16px; margin-bottom: 32px; }
-    
     .btn {
-      padding: 14px 28px; border-radius: 8px; font-family: var(--font-mono); font-size: 14px;
+      padding: 10px 20px; border-radius: 8px; font-family: var(--font-mono); font-size: 12px;
       font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
       border: none; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
     }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg);
-    }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg); }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,212,255,0.3); }
-    .btn-secondary {
-      background: transparent; border: 1px solid var(--accent); color: var(--accent);
-    }
+    .btn-secondary { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
     .btn-secondary:hover { background: var(--accent); color: var(--bg); }
-    .btn-danger {
-      background: transparent; border: 1px solid var(--warn); color: var(--warn);
-    }
+    .btn-danger { background: transparent; border: 1px solid var(--warn); color: var(--warn); }
     .btn-danger:hover { background: var(--warn); color: white; }
-    
+    .btn-sm { padding: 8px 14px; font-size: 11px; }
+
     /* Reports Grid */
-    .reports-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 24px;
-      margin-top: 32px;
-    }
-    .report-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      transition: all 0.2s;
-    }
-    .report-card:hover {
-      border-color: var(--accent);
-      transform: translateY(-2px);
-    }
-    .report-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 16px;
-    }
-    .report-address {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text);
-    }
-    .report-date {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--muted);
-    }
-    .report-inspector {
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 16px;
-    }
-    .report-stats {
-      display: flex;
-      gap: 16px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-    }
-    .stat {
-      text-align: center;
-    }
-    .stat-num {
-      font-family: var(--font-mono);
-      font-size: 20px;
-      font-weight: 700;
-      display: block;
-    }
+    .reports-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px; margin-top: 32px; }
+    .report-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: all 0.2s; }
+    .report-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .report-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .report-address { font-size: 16px; font-weight: 600; color: var(--text); }
+    .report-date { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+    .report-inspector { font-size: 14px; color: var(--muted); margin-bottom: 16px; }
+    .report-stats { display: flex; gap: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .stat { text-align: center; }
+    .stat-num { font-family: var(--font-mono); font-size: 20px; font-weight: 700; display: block; }
     .stat-num.critical { color: var(--warn); }
     .stat-num.moderate { color: #ffc107; }
     .stat-num.minor { color: var(--accent2); }
-    .stat-label {
-      font-size: 10px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .report-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-    }
-    
-    /* Empty State */
-    .empty-state {
-      text-align: center;
-      padding: 80px 24px;
-      color: var(--muted);
-    }
-    .empty-state-icon {
-      font-size: 64px;
-      margin-bottom: 16px;
-      opacity: 0.5;
-    }
-    .empty-state-actions {
-      margin-top: 24px;
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-    }
-    
-    /* Loading */
-    .loading {
-      text-align: center;
-      padding: 60px 24px;
-      color: var(--muted);
-    }
-    .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 16px;
-    }
+    .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .report-actions { display: flex; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+    /* Empty / Loading */
+    .empty-state { text-align: center; padding: 80px 24px; color: var(--muted); }
+    .empty-state-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+    .empty-state-actions { margin-top: 24px; display: flex; gap: 16px; justify-content: center; }
+    .loading { text-align: center; padding: 60px 24px; color: var(--muted); }
+    .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    
+
+    /* Report Detail Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+      justify-content: center; align-items: flex-start; padding: 80px 24px 40px;
+      overflow-y: auto;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
+      max-width: 800px; width: 100%; padding: 32px; position: relative;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px; background: none; border: none;
+      color: var(--muted); font-size: 24px; cursor: pointer; transition: color 0.2s;
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+    }
+    .modal-close:hover { color: var(--warn); background: rgba(255,107,53,0.1); }
+    .modal-title { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+    .modal-meta { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+    .modal-summary { display: flex; gap: 20px; margin-bottom: 24px; padding: 16px; background: var(--surface); border-radius: 10px; border: 1px solid var(--border); }
+    .modal-actions { display: flex; gap: 12px; margin-bottom: 24px; }
+
+    /* Issue List */
+    .issue-list { display: flex; flex-direction: column; gap: 16px; }
+    .issue-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; transition: border-color 0.2s; }
+    .issue-card:hover { border-color: rgba(0,212,255,0.3); }
+    .issue-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .severity-badge {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      padding: 4px 10px; border-radius: 20px; text-transform: uppercase;
+    }
+    .severity-badge.critical { background: rgba(255,107,53,0.15); color: var(--warn); }
+    .severity-badge.moderate { background: rgba(255,193,7,0.15); color: #ffc107; }
+    .severity-badge.minor { background: rgba(0,255,157,0.15); color: var(--accent2); }
+    .issue-title { font-size: 15px; font-weight: 600; }
+    .issue-location { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+    .issue-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 8px; }
+    .issue-rec { font-size: 12px; color: var(--accent); line-height: 1.5; padding: 10px 14px; background: rgba(0,212,255,0.05); border-radius: 8px; border-left: 3px solid var(--accent); }
+    .issue-confidence { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-top: 8px; }
+
+    /* Toast */
+    .toast-container { position: fixed; top: 80px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .toast {
+      pointer-events: auto; display: flex; align-items: center; gap: 10px; padding: 14px 20px;
+      border-radius: 10px; font-family: var(--font-mono); font-size: 13px; color: var(--text);
+      backdrop-filter: blur(16px); border: 1px solid var(--border);
+      transform: translateX(120%); opacity: 0; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .toast.show { transform: translateX(0); opacity: 1; }
+    .toast-success { background: rgba(0,255,157,0.1); border-color: rgba(0,255,157,0.3); }
+    .toast-error { background: rgba(255,107,53,0.1); border-color: rgba(255,107,53,0.3); }
+    .toast-icon { font-size: 18px; flex-shrink: 0; }
+    .toast-body { flex: 1; }
+    .toast-title { font-weight: 600; font-size: 13px; }
+
     @media (max-width: 640px) {
       .reports-grid { grid-template-columns: 1fr; }
+      nav { padding: 16px 20px; }
+      .modal { padding: 20px; }
+      .modal-summary { flex-wrap: wrap; }
     }
   </style>
 </head>
@@ -165,37 +143,55 @@
   <nav>
     <div class="logo">Inspect<span>AI</span></div>
     <div class="nav-links">
-      <a href="app.html">Create Report</a>
-      <a href="index.html">← Back to Home</a>
+      <a href="app.html">创建报告</a>
+      <a href="index.html">← 返回首页</a>
     </div>
   </nav>
 
   <div class="container">
-    <h1>My Reports</h1>
-    <p class="subtitle">View and manage your saved inspection reports.</p>
+    <h1>我的报告</h1>
+    <p class="subtitle">查看和管理已保存的检测报告。</p>
     
     <div id="loading" class="loading">
       <div class="spinner"></div>
-      <div>Loading your reports...</div>
+      <div>正在加载报告...</div>
     </div>
     
     <div id="emptyState" class="empty-state" style="display: none;">
       <div class="empty-state-icon">📋</div>
-      <h2>No reports yet</h2>
-      <p style="margin-top: 12px;">Create your first inspection report to see it here.</p>
+      <h2>暂无报告</h2>
+      <p style="margin-top: 12px;">创建您的第一份检测报告。</p>
       <div class="empty-state-actions">
-        <a href="app.html" class="btn btn-primary">Create Report →</a>
+        <a href="app.html" class="btn btn-primary">创建报告 →</a>
       </div>
     </div>
     
     <div id="reportsGrid" class="reports-grid" style="display: none;"></div>
   </div>
 
+  <!-- Report Detail Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent"></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
   <script>
-    // IndexedDB helpers
     const DB_NAME = 'InspectAI';
     const DB_VERSION = 1;
     const STORE_NAME = 'reports';
+    
+    function showToast(title, msg, type = 'success', duration = 3000) {
+      const container = document.getElementById('toastContainer');
+      const icons = { success: '✓', error: '✗' };
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `<span class="toast-icon">${icons[type] || '✓'}</span><div class="toast-body"><div class="toast-title">${title}</div></div>`;
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add('show'));
+      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, duration);
+    }
     
     function openDB() {
       return new Promise((resolve, reject) => {
@@ -218,6 +214,17 @@
         const store = tx.objectStore(STORE_NAME);
         const request = store.getAll();
         request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
+    }
+    
+    async function getReport(id) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.get(id);
+        request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
     }
@@ -250,32 +257,33 @@
           <div class="report-card">
             <div class="report-header">
               <div>
-                <div class="report-address">${report.propertyInfo?.address || 'Unknown Address'}</div>
-                <div class="report-date">${new Date(report.createdAt).toLocaleDateString()}</div>
+                <div class="report-address">${report.propertyInfo?.address || '未填写地址'}</div>
+                <div class="report-date">${new Date(report.createdAt).toLocaleDateString('zh-CN')}</div>
               </div>
             </div>
-            <div class="report-inspector">Inspector: ${report.propertyInfo?.inspectorName || 'Unknown'}</div>
+            <div class="report-inspector">检测员：${report.propertyInfo?.inspectorName || '未填写'}</div>
             <div class="report-stats">
               <div class="stat">
                 <span class="stat-num critical">${report.severityCounts?.critical || 0}</span>
-                <span class="stat-label">Critical</span>
+                <span class="stat-label">严重</span>
               </div>
               <div class="stat">
                 <span class="stat-num moderate">${report.severityCounts?.moderate || 0}</span>
-                <span class="stat-label">Moderate</span>
+                <span class="stat-label">中等</span>
               </div>
               <div class="stat">
                 <span class="stat-num minor">${report.severityCounts?.minor || 0}</span>
-                <span class="stat-label">Minor</span>
+                <span class="stat-label">轻微</span>
               </div>
               <div class="stat">
                 <span class="stat-num" style="color: var(--text)">${report.totalIssues || 0}</span>
-                <span class="stat-label">Total</span>
+                <span class="stat-label">总计</span>
               </div>
             </div>
             <div class="report-actions">
-              <button class="btn btn-secondary" onclick="viewReport('${report.id}')">👁️ View</button>
-              <button class="btn btn-danger" onclick="confirmDelete('${report.id}')">🗑️ Delete</button>
+              <button class="btn btn-secondary btn-sm" onclick="viewReport('${report.id}')">👁️ 查看</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportReportPDF('${report.id}')">📄 导出 PDF</button>
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('${report.id}')">🗑️ 删除</button>
             </div>
           </div>
         `).join('');
@@ -283,28 +291,181 @@
         console.error('Load reports error:', error);
         document.getElementById('loading').style.display = 'none';
         document.getElementById('emptyState').style.display = 'block';
-        document.querySelector('#emptyState h2').textContent = 'Error loading reports';
+        document.querySelector('#emptyState h2').textContent = '加载失败';
         document.querySelector('#emptyState p').textContent = error.message;
       }
     }
     
-    function viewReport(reportId) {
-      alert(`View report: ${reportId}\n\n(Full report viewer coming soon)`);
+    async function viewReport(reportId) {
+      try {
+        const report = await getReport(reportId);
+        if (!report) { showToast('未找到报告', '', 'error'); return; }
+        
+        const items = report.items || [];
+        const info = report.propertyInfo || {};
+        const overlay = document.getElementById('modalOverlay');
+        const modal = document.getElementById('modalContent');
+        
+        modal.innerHTML = `
+          <button class="modal-close" onclick="closeModal()">✕</button>
+          <div class="modal-title">${info.address || '未填写地址'}</div>
+          <div class="modal-meta">
+            检测员：${info.inspectorName || '未填写'} &nbsp;|&nbsp; 
+            日期：${info.inspectionDate ? new Date(info.inspectionDate).toLocaleDateString('zh-CN') : '未填写'} &nbsp;|&nbsp;
+            创建时间：${new Date(report.createdAt).toLocaleString('zh-CN')}
+          </div>
+          
+          <div class="modal-summary">
+            <div class="stat">
+              <span class="stat-num critical">${report.severityCounts?.critical || 0}</span>
+              <span class="stat-label">严重</span>
+            </div>
+            <div class="stat">
+              <span class="stat-num moderate">${report.severityCounts?.moderate || 0}</span>
+              <span class="stat-label">中等</span>
+            </div>
+            <div class="stat">
+              <span class="stat-num minor">${report.severityCounts?.minor || 0}</span>
+              <span class="stat-label">轻微</span>
+            </div>
+            <div class="stat">
+              <span class="stat-num" style="color: var(--text)">${report.totalIssues || 0}</span>
+              <span class="stat-label">总计</span>
+            </div>
+          </div>
+          
+          <div class="modal-actions">
+            <button class="btn btn-primary btn-sm" onclick="exportReportPDF('${reportId}')">📄 导出 PDF</button>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal()">关闭</button>
+          </div>
+          
+          <div class="issue-list">
+            ${items.length === 0 ? '<div style="text-align:center;color:var(--muted);padding:40px;">暂无检测项目</div>' : 
+              items.map((item, i) => `
+                <div class="issue-card">
+                  <div class="issue-top">
+                    <span class="severity-badge ${item.severity || 'moderate'}">${
+                      {critical:'严重',moderate:'中等',minor:'轻微'}[item.severity] || item.severity || '未知'
+                    }</span>
+                    <span class="issue-title">${item.issue || '未知问题'}</span>
+                  </div>
+                  ${item.location ? `<div class="issue-location">📍 ${item.location}</div>` : ''}
+                  ${item.description ? `<div class="issue-desc">${item.description}</div>` : ''}
+                  ${item.recommendation ? `<div class="issue-rec">💡 建议：${item.recommendation}</div>` : ''}
+                  ${item.confidence ? `<div class="issue-confidence">置信度：${Math.round(item.confidence * 100)}%</div>` : ''}
+                </div>
+              `).join('')
+            }
+          </div>
+        `;
+        
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      } catch (error) {
+        showToast('加载失败', '', 'error');
+        console.error(error);
+      }
+    }
+    
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    
+    // Close modal on overlay click
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+    // Close modal on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+    
+    async function exportReportPDF(reportId) {
+      try {
+        const report = await getReport(reportId);
+        if (!report) { showToast('未找到报告', '', 'error'); return; }
+        
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+          showToast('PDF 库未加载', '请刷新页面后重试', 'error');
+          return;
+        }
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const contentW = pageW - margin * 2;
+        const info = report.propertyInfo || {};
+        const items = report.items || [];
+        
+        // Cover
+        doc.setFontSize(32); doc.setTextColor(0, 212, 255);
+        doc.text('InspectAI', pageW / 2, 60, { align: 'center' });
+        doc.setFontSize(16); doc.setTextColor(30, 41, 59);
+        doc.text('Property Inspection Report', pageW / 2, 80, { align: 'center' });
+        doc.setFontSize(12); doc.setTextColor(60, 60, 60);
+        let cy = 110;
+        doc.text(`Property: ${info.address || 'N/A'}`, pageW / 2, cy, { align: 'center' }); cy += 8;
+        doc.text(`Inspector: ${info.inspectorName || 'N/A'}`, pageW / 2, cy, { align: 'center' }); cy += 8;
+        doc.text(`Date: ${info.inspectionDate ? new Date(info.inspectionDate).toLocaleDateString() : 'N/A'}`, pageW / 2, cy, { align: 'center' });
+        cy += 20;
+        doc.setFontSize(10); doc.setTextColor(100, 116, 139);
+        doc.text(`Total Issues: ${report.totalIssues || items.length}`, pageW / 2, cy, { align: 'center' });
+        
+        // Detail pages
+        doc.addPage();
+        let y = margin;
+        doc.setFontSize(18); doc.setTextColor(30, 41, 59);
+        doc.text('Detailed Findings', margin, y); y += 12;
+        
+        items.forEach((item) => {
+          if (y > pageH - 50) { doc.addPage(); y = margin; }
+          const sevColors = { critical: [255,107,53], moderate: [255,193,7], minor: [0,255,157] };
+          const sc = sevColors[item.severity] || sevColors.moderate;
+          doc.setFontSize(9); doc.setTextColor(sc[0], sc[1], sc[2]);
+          doc.text((item.severity || 'unknown').toUpperCase(), margin, y);
+          doc.setFontSize(13); doc.setTextColor(30, 41, 59);
+          const tl = doc.splitTextToSize(item.issue || 'Unknown', contentW - 30);
+          doc.text(tl, margin + 30, y); y += tl.length * 6 + 2;
+          if (item.location) { doc.setFontSize(9); doc.setTextColor(100,116,139); doc.text(`Location: ${item.location}`, margin + 30, y); y += 5; }
+          if (item.description) {
+            doc.setFontSize(10); doc.setTextColor(100,116,139);
+            const dl = doc.splitTextToSize(item.description, contentW - 30);
+            if (y + dl.length * 5 > pageH - 30) { doc.addPage(); y = margin; }
+            doc.text(dl, margin + 30, y); y += dl.length * 5 + 2;
+          }
+          if (item.recommendation) {
+            doc.setFontSize(9); doc.setTextColor(0, 212, 255);
+            const rl = doc.splitTextToSize(`Rec: ${item.recommendation}`, contentW - 30);
+            if (y + rl.length * 4.5 > pageH - 30) { doc.addPage(); y = margin; }
+            doc.text(rl, margin + 30, y); y += rl.length * 4.5 + 2;
+          }
+          if (item.confidence) { doc.setFontSize(8); doc.setTextColor(100,116,139); doc.text(`Confidence: ${Math.round(item.confidence * 100)}%`, margin + 30, y); y += 5; }
+          y += 8;
+        });
+        
+        doc.save(`inspection-report-${reportId}.pdf`);
+        showToast('导出成功', 'PDF 已下载');
+      } catch (err) {
+        showToast('导出失败', err.message, 'error');
+        console.error(err);
+      }
     }
     
     async function confirmDelete(reportId) {
-      if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+      if (confirm('确定要删除这份报告吗？此操作不可撤销。')) {
         try {
           await deleteReport(reportId);
-          alert('Report deleted successfully');
+          showToast('删除成功', '报告已删除');
           loadReports();
         } catch (error) {
-          alert('Failed to delete report: ' + error.message);
+          showToast('删除失败', error.message, 'error');
         }
       }
     }
     
-    // Load reports on page load
     loadReports();
   </script>
 </body>

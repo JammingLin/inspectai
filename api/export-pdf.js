@@ -3,7 +3,10 @@
 
 import PDFDocument from 'pdfkit';
 
-// Node.js runtime (auto-detected by Vercel)
+export const config = {
+  runtime: 'nodejs',
+  maxDuration: 60,
+};
 
 export default async function handler(req) {
   const headers = {
@@ -34,20 +37,24 @@ export default async function handler(req) {
       inspectionDate: new Date().toLocaleDateString()
     };
 
+    // Create PDF document
     const doc = new PDFDocument({
       size: 'A4',
       margins: { top: 50, bottom: 50, left: 50, right: 50 },
     });
 
+    // Collect PDF data
     const chunks = [];
-    doc.on('data', chunk => chunks.push(chunk));
-
-    // Generate PDF
-    generateReport(doc, report, info);
-    doc.end();
-
-    // Wait for PDF to be ready
-    await new Promise(resolve => doc.on('end', resolve));
+    
+    await new Promise((resolve, reject) => {
+      doc.on('data', (chunk) => chunks.push(chunk));
+      doc.on('end', resolve);
+      doc.on('error', reject);
+      
+      // Generate content
+      generateReport(doc, report, info);
+      doc.end();
+    });
 
     const pdfBuffer = Buffer.concat(chunks);
 
@@ -60,7 +67,10 @@ export default async function handler(req) {
     });
   } catch (error) {
     console.error('PDF generation error:', error);
-    return new Response(JSON.stringify({ error: 'PDF generation failed' }), { headers, status: 500 });
+    return new Response(JSON.stringify({ 
+      error: 'PDF generation failed',
+      message: error.message 
+    }), { headers, status: 500 });
   }
 }
 

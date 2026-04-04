@@ -6,7 +6,7 @@
       "maxDuration": 60
     },
     "api/export-pdf.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     }
   },
   "rewrites": [

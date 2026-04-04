@@ -271,7 +271,7 @@
       </div>
       <!-- Auth Area -->
       <div id="authArea">
-        <button class="btn-login" id="googleSignInBtn" onclick="handleGoogleSignIn()">Sign in with Google</button>
+        <div id="googleBtnContainer"></div>
       </div>
     </div>
   </nav>
@@ -399,13 +399,14 @@
             <button class="btn-logout" onclick="handleSignOut()">Sign Out</button>
           </div>`;
       } else {
-        authArea.innerHTML = `<button class="btn-login" id="googleSignInBtn" onclick="handleGoogleSignIn()">Sign in with Google</button>`;
-      }
-    }
-
-    function handleGoogleSignIn() {
-      if (googleClient) {
-        googleClient.requestAccessToken();
+        authArea.innerHTML = `<div id="googleBtnContainer"></div>`;
+        // Render Google button
+        if (typeof google !== 'undefined' && google.accounts) {
+          google.accounts.id.renderButton(
+            document.getElementById('googleBtnContainer'),
+            { theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin_with' }
+          );
+        }
       }
     }
 
@@ -413,7 +414,9 @@
       currentUser = null;
       localStorage.removeItem('inspectai_user');
       updateAuthUI();
-      google.accounts.id.disableAutoSelect();
+      if (typeof google !== 'undefined' && google.accounts) {
+        google.accounts.id.disableAutoSelect();
+      }
     }
 
     // Init Google Auth
@@ -433,12 +436,21 @@
           client_id: GOOGLE_CLIENT_ID,
           callback: handleCredentialResponse,
           auto_select: true,
-          cancel_on_tap_outside: true
+          cancel_on_tap_outside: true,
+          use_fedcm_for_prompt: false
         });
 
         // One Tap prompt (if not signed in)
         if (!currentUser) {
           google.accounts.id.prompt();
+          // Render button
+          const btnContainer = document.getElementById('googleBtnContainer');
+          if (btnContainer) {
+            google.accounts.id.renderButton(
+              btnContainer,
+              { theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin_with' }
+            );
+          }
         }
       }
     });

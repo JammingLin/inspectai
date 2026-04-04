@@ -6,6 +6,7 @@
   <title>InspectAI — Create Report</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>" />
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <style>
@@ -31,6 +32,14 @@
     .logo span { color: var(--accent2); }
     nav a { font-family: var(--font-mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 1px; text-transform: uppercase; transition: color 0.2s; }
     nav a:hover { color: var(--accent); }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .user-area { display: flex; align-items: center; gap: 10px; }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--accent); }
+    .user-name { font-family: var(--font-mono); font-size: 12px; color: var(--text); letter-spacing: 1px; }
+    .btn-login { font-family: var(--font-mono); font-size: 12px; padding: 8px 16px; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s; }
+    .btn-login:hover { background: var(--accent2); }
+    .btn-logout { font-family: var(--font-mono); font-size: 10px; padding: 4px 10px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+    .btn-logout:hover { color: var(--warn); border-color: var(--warn); }
     .container { max-width: 1200px; margin: 0 auto; padding: 120px 24px 60px; position: relative; z-index: 1; }
     h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
     .subtitle { color: var(--muted); font-size: 16px; margin-bottom: 32px; }
@@ -255,9 +264,15 @@
 <body>
   <nav>
     <div class="logo">Inspect<span>AI</span></div>
-    <div class="nav-links">
-      <a href="reports.html">My Reports</a>
-      <a href="index.html">← Back to Landing</a>
+    <div class="nav-right">
+      <div class="nav-links">
+        <a href="reports.html">My Reports</a>
+        <a href="index.html">← Back to Landing</a>
+      </div>
+      <!-- Auth Area -->
+      <div id="authArea">
+        <button class="btn-login" id="googleSignInBtn" onclick="handleGoogleSignIn()">Sign in with Google</button>
+      </div>
     </div>
   </nav>
 
@@ -346,6 +361,89 @@
   </div>
 
   <script>
+    // ===== Google Auth =====
+    const GOOGLE_CLIENT_ID = '704297205823-9rvnb5vrpauc32tii5js3qmr94t8kktl.apps.googleusercontent.com';
+    let currentUser = null;
+    let googleClient = null;
+
+    // Parse JWT token (no library needed)
+    function parseJwt(token) {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join(''));
+      return JSON.parse(jsonPayload);
+    }
+
+    function handleCredentialResponse(response) {
+      const user = parseJwt(response.credential);
+      currentUser = {
+        id: user.sub,
+        name: user.name,
+        email: user.email,
+        picture: user.picture,
+        token: response.credential
+      };
+      localStorage.setItem('inspectai_user', JSON.stringify(currentUser));
+      updateAuthUI();
+    }
+
+    function updateAuthUI() {
+      const authArea = document.getElementById('authArea');
+      if (currentUser) {
+        authArea.innerHTML = `
+          <div class="user-area">
+            <img class="user-avatar" src="${currentUser.picture}" alt="${currentUser.name}" referrerpolicy="no-referrer" />
+            <span class="user-name">${currentUser.name}</span>
+            <button class="btn-logout" onclick="handleSignOut()">Sign Out</button>
+          </div>`;
+      } else {
+        authArea.innerHTML = `<button class="btn-login" id="googleSignInBtn" onclick="handleGoogleSignIn()">Sign in with Google</button>`;
+      }
+    }
+
+    function handleGoogleSignIn() {
+      if (googleClient) {
+        googleClient.requestAccessToken();
+      }
+    }
+
+    function handleSignOut() {
+      currentUser = null;
+      localStorage.removeItem('inspectai_user');
+      updateAuthUI();
+      google.accounts.id.disableAutoSelect();
+    }
+
+    // Init Google Auth
+    window.addEventListener('load', () => {
+      // Restore session
+      const saved = localStorage.getItem('inspectai_user');
+      if (saved) {
+        try {
+          currentUser = JSON.parse(saved);
+          updateAuthUI();
+        } catch(e) { localStorage.removeItem('inspectai_user'); }
+      }
+
+      // Init Google Identity Services
+      if (typeof google !== 'undefined' && google.accounts) {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse,
+          auto_select: true,
+          cancel_on_tap_outside: true
+        });
+
+        // One Tap prompt (if not signed in)
+        if (!currentUser) {
+          google.accounts.id.prompt();
+        }
+      }
+    });
+    // ===== End Google Auth =====
+    
     const uploadZone = document.getElementById('uploadZone');
     const fileInput = document.getElementById('fileInput');
     const photoGrid = document.getElementById('photoGrid');

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- SEO Meta Tags -->
+  <title>博客 — InspectAI | 房屋检测行业洞察</title>
+  <meta name="description" content="InspectAI 博客，分享房屋检测行业洞察、AI 技术应用、检测技巧、案例分析等内容。" />
+  <meta name="keywords" content="房屋检测博客，检测师社区，AI 检测技术，房屋检测技巧" />
+  <meta name="author" content="InspectAI" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://inspectai.cc/blog" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080c10; --bg2: #0d1117; --surface: #111820; --border: #1e2d3d;
+      --accent: #00d4ff; --accent2: #00ff9d; --warn: #ff6b35; --text: #e2e8f0; --muted: #64748b;
+      --font-display: 'Outfit', 'Noto Sans SC', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-display); overflow-x: hidden; }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px; pointer-events: none; z-index: 0;
+    }
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between; padding: 20px 48px;
+      background: rgba(8,12,16,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+    }
+    .logo { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
+    .logo span { color: var(--accent2); }
+    nav a { font-family: var(--font-mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 1px; text-transform: uppercase; transition: color 0.2s; }
+    nav a:hover { color: var(--accent); }
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .btn-nav {
+      background: transparent; border: 1px solid var(--accent); color: var(--accent);
+      padding: 8px 20px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px;
+      text-transform: uppercase; cursor: pointer; transition: all 0.2s; text-decoration: none;
+    }
+    .btn-nav:hover { background: var(--accent); color: var(--bg); }
+    .blog-index-header {
+      position: relative; z-index: 1; padding: 160px 48px 60px; max-width: 900px; margin: 0 auto; text-align: center;
+    }
+    .blog-index-header h1 { font-size: clamp(36px, 6vw, 56px); font-weight: 800; letter-spacing: -2px; margin-bottom: 16px; }
+    .blog-index-header p { font-size: 18px; color: var(--muted); line-height: 1.6; font-family: 'Inter', 'Noto Sans SC', sans-serif; }
+    .blog-list {
+      position: relative; z-index: 1; padding: 0 48px 80px; max-width: 900px; margin: 0 auto;
+    }
+    .blog-post-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 32px;
+      margin-bottom: 24px; transition: all 0.2s; text-decoration: none; display: block;
+    }
+    .blog-post-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .blog-post-card .meta {
+      font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+      letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;
+    }
+    .blog-post-card h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.5px; }
+    .blog-post-card p { font-size: 15px; color: var(--muted); line-height: 1.6; font-family: 'Inter', 'Noto Sans SC', sans-serif; margin-bottom: 0; }
+    .blog-post-card .read-more {
+      font-family: var(--font-mono); font-size: 12px; color: var(--accent); margin-top: 16px; display: inline-block;
+    }
+    .cta-section {
+      position: relative; z-index: 1; text-align: center; padding: 80px 48px;
+      border-top: 1px solid var(--border); background: var(--bg2);
+    }
+    .cta-section h2 { font-size: clamp(24px, 4vw, 36px); font-weight: 800; letter-spacing: -1px; margin-bottom: 16px; }
+    .cta-section p { color: var(--muted); font-size: 16px; margin-bottom: 32px; font-family: 'Inter', 'Noto Sans SC', sans-serif; }
+    .btn-primary {
+      background: var(--accent); color: var(--bg); border: 1px solid var(--accent);
+      padding: 14px 32px; font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-primary:hover { background: var(--accent2); border-color: var(--accent2); }
+    footer {
+      position: relative; z-index: 1; border-top: 1px solid var(--border);
+      padding: 32px 48px; display: flex; justify-content: space-between; align-items: center;
+    }
+    footer p { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+    @media (max-width: 768px) {
+      nav { padding: 16px 24px; } .nav-links { display: none; }
+      .blog-index-header, .blog-list { padding-left: 24px; padding-right: 24px; }
+      footer { flex-direction: column; gap: 12px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="logo">Inspect<span>AI</span></div>
+    <div class="nav-links">
+      <a href="/blog">博客</a>
+      <a href="/app.html">创建报告</a>
+      <a href="/index.html" class="btn-nav">返回首页</a>
+    </div>
+  </nav>
+
+  <header class="blog-index-header">
+    <h1>InspectAI 博客</h1>
+    <p>分享房屋检测行业洞察、AI 技术应用、检测技巧、案例分析等内容。</p>
+  </header>
+
+  <div class="blog-list">
+    <a href="/blog/how-to-choose-home-inspection-software.html" class="blog-post-card">
+      <p class="meta">// 指南 · 软件选型</p>
+      <h2>如何选择房屋检测软件？2026 年检测师必备工具指南</h2>
+      <p>对比市面上主流的房屋检测软件，从功能、价格、易用性、报告质量等维度分析，帮助检测师选择最适合的工具。</p>
+      <span class="read-more">阅读文章 →</span>
+    </a>
+
+    <a href="/blog/ai-in-home-inspection.html" class="blog-post-card">
+      <p class="meta">// 技术 · AI 应用</p>
+      <h2>AI 在房屋检测中的应用：通义千问 VL 如何提升检测效率</h2>
+      <p>深入了解 AI 视觉大模型在房屋检测场景的应用，包括缺陷识别、报告生成、质量控制等方面的实践案例。</p>
+      <span class="read-more">阅读文章 →</span>
+    </a>
+
+    <a href="/blog/common-house-defects.html" class="blog-post-card">
+      <p class="meta">// 知识 · 检测技巧</p>
+      <h2>房屋检测常见问题清单：检测师必看的 20 个典型缺陷</h2>
+      <p>总结房屋检测中最常见的 20 类缺陷，包括识别方法、严重程度判断、维修建议，适合新手检测师学习参考。</p>
+      <span class="read-more">阅读文章 →</span>
+    </a>
+  </div>
+
+  <section class="cta-section">
+    <h2>准备好提升检测效率了吗？</h2>
+    <p>免费试用 InspectAI，体验 AI 驱动的房屋检测报告生成。</p>
+    <a href="/app.html" class="btn-primary">开始创建报告 →</a>
+  </section>
+
+  <footer>
+    <div class="logo" style="font-size:14px">Inspect<span>AI</span></div>
+    <p>© 2026 InspectAI. 为房屋检测师打造的智能工具。</p>
+  </footer>
+
+</body>
+</html>

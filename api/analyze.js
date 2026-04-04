@@ -1,7 +1,6 @@
-// Vercel Serverless Function - AI Image Analysis
-// Uses Qwen-VL for visual recognition
-
-// Node.js runtime (auto-detected by Vercel)
+// Vercel Edge Function - AI Image Analysis
+// Edge Functions have no 10s timeout limit on Hobby plan
+export const config = { runtime: 'edge' };
 
 export default async function handler(req) {
   const headers = {
@@ -20,104 +19,116 @@ export default async function handler(req) {
   }
 
   try {
-    const { images } = await req.json();
-    
+    const body = await req.json();
+    const { images } = body;
+
     if (!images || !Array.isArray(images) || images.length === 0) {
       return new Response(JSON.stringify({ error: 'No images provided' }), { headers, status: 400 });
     }
 
-    // Analyze each image with Qwen-VL
-    const results = await Promise.all(images.map(async (img) => {
+    const results = [];
+    for (const img of images) {
       const analysis = await analyzeImage(img.base64);
-      return { id: img.id, ...analysis };
-    }));
+      results.push({ id: img.id, ...analysis });
+    }
 
     return new Response(JSON.stringify(results), { headers, status: 200 });
   } catch (error) {
-    console.error('Analysis error:', error);
-    return new Response(JSON.stringify({ error: 'Analysis failed' }), { headers, status: 500 });
+    return new Response(JSON.stringify({ 
+      error: 'Analysis failed',
+      details: error.message
+    }), { headers, status: 500 });
   }
 }
 
 async function analyzeImage(base64Image) {
-  // Call Qwen-VL API (Alibaba Cloud - works in China)
   const API_KEY = process.env.QWEN_API_KEY;
-  const API_URL = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
+  const API_URL = 'https://dashscope-intl.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
 
-  const prompt = `You are a professional home inspection expert. Analyze this property photo and identify any issues.
+  if (!API_KEY) {
+    throw new Error('QWEN_API_KEY is not configured');
+  }
 
-Respond in JSON format:
+  const prompt = `You are a professional home inspector analyzing a property photo.
+
+Identify any defects, issues, or concerns. Return ONLY a valid JSON object:
+
 {
-  "issue": "Brief issue name (e.g., 'Foundation Crack', 'Water Stain', 'Mold Growth')",
-  "severity": "critical|moderate|minor",
-  "description": "Professional description suitable for inspection report (2-3 sentences, technical but clear)",
+  "issue": "Brief issue name (e.g., 'Foundation Crack', 'Water Damage', 'Roof Shingle Damage')",
+  "severity": "critical" | "moderate" | "minor",
+  "description": "Professional 2-3 sentence description suitable for an inspection report",
   "confidence": 0.0-1.0,
-  "location": "Suggested location if visible (optional)"
+  "location": "Identifiable room/area (e.g., 'Basement', 'Kitchen', 'Exterior Wall')",
+  "recommendation": "Brief repair or further evaluation suggestion"
 }
 
-Focus on:
-- Foundation issues (cracks, settling)
-- Water damage (stains, leaks, mold)
-- Structural problems
-- Electrical issues
-- Plumbing problems
-- Roof damage
-- Pest damage
+Severity guide:
+- critical: Safety hazards, structural issues, severe water damage, electrical hazards
+- moderate: Needs repair but not urgent, surface damage with potential underlying issues
+- minor: Cosmetic issues, minor wear, maintenance items
 
-If no issues found, still provide a description of the condition.`;
+If no issues found, set issue to "No Issues Found", severity to "minor", and describe the normal condition.
 
+Return ONLY JSON, no markdown or extra text.`;
+
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'qwen-vl-max',
+      input: {
+        messages: [{
+          role: 'user',
+          content: [
+            { image: base64Image },
+            { text: prompt }
+          ]
+        }]
+      }
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Qwen API error ${response.status}: ${errorText}`);
+  }
+
+  const data = await response.json();
+  const content = data.output?.choices?.[0]?.message?.content;
+  
+  if (!content) {
+    throw new Error('No content in response');
+  }
+
+  // Handle content that may be array or string
+  const textContent = Array.isArray(content) 
+    ? content.find(c => c.text)?.text || JSON.stringify(content)
+    : content;
+
+  let parsed;
   try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'qwen-vl-max',
-        input: {
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'image', image: base64Image },
-              { type: 'text', text: prompt }
-            ]
-          }]
-        },
-        parameters: {
-          result_format: 'json',
-          temperature: 0.3,
-        }
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Qwen API error');
-    }
-
-    const data = await response.json();
-    const content = data.output.choices[0].message.content;
-    
-    // Parse JSON from response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    const analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : {
-      issue: 'General Condition',
+    const jsonStr = textContent.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    parsed = JSON.parse(jsonStr);
+  } catch {
+    parsed = {
+      issue: 'Visual Analysis',
       severity: 'minor',
-      description: content,
+      description: textContent,
       confidence: 0.8,
-      location: ''
-    };
-
-    return analysis;
-  } catch (error) {
-    console.error('Qwen API error:', error);
-    // Fallback response
-    return {
-      issue: 'Visual Inspection Required',
-      severity: 'moderate',
-      description: 'This area requires detailed visual inspection by a qualified home inspector. Please examine closely for potential issues.',
-      confidence: 0.5,
-      location: ''
+      location: '',
+      recommendation: 'Further inspection recommended'
     };
   }
+
+  return {
+    issue: parsed.issue || 'Visual Analysis',
+    severity: ['critical', 'moderate', 'minor'].includes(parsed.severity) ? parsed.severity : 'minor',
+    description: parsed.description || textContent,
+    confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.8,
+    location: parsed.location || '',
+    recommendation: parsed.recommendation || 'Further inspection recommended'
+  };
 }

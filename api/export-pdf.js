@@ -22,11 +22,17 @@ export default async function handler(req) {
   }
 
   try {
-    const { report } = await req.json();
+    const { report, propertyInfo } = await req.json();
     
     if (!report || !Array.isArray(report)) {
       return new Response(JSON.stringify({ error: 'Invalid report data' }), { headers, status: 400 });
     }
+    
+    const info = propertyInfo || {
+      address: 'Not specified',
+      inspectorName: 'Not specified',
+      inspectionDate: new Date().toLocaleDateString()
+    };
 
     const doc = new PDFDocument({
       size: 'A4',
@@ -37,7 +43,7 @@ export default async function handler(req) {
     doc.on('data', chunk => chunks.push(chunk));
 
     // Generate PDF
-    generateReport(doc, report);
+    generateReport(doc, report, info);
     doc.end();
 
     // Wait for PDF to be ready
@@ -58,7 +64,7 @@ export default async function handler(req) {
   }
 }
 
-function generateReport(doc, report) {
+function generateReport(doc, report, propertyInfo) {
   const colors = {
     primary: '#00d4ff',
     secondary: '#00ff9d',
@@ -73,8 +79,16 @@ function generateReport(doc, report) {
   doc.fontSize(32).fillColor(colors.primary).text('InspectAI', 50, 100, { align: 'center' });
   doc.moveDown();
   doc.fontSize(16).fillColor(colors.text).text('Property Inspection Report', { align: 'center' });
+  doc.moveDown(3);
+  
+  // Property Information
+  doc.fontSize(12).fillColor(colors.text).text(`Property Address: ${propertyInfo.address || 'Not specified'}`, 50, doc.y, { align: 'center' });
+  doc.moveDown();
+  doc.text(`Inspector: ${propertyInfo.inspectorName || 'Not specified'}`, { align: 'center' });
+  doc.text(`Inspection Date: ${propertyInfo.inspectionDate ? new Date(propertyInfo.inspectionDate).toLocaleDateString() : 'Not specified'}`, { align: 'center' });
+  
   doc.moveDown(2);
-  doc.fontSize(12).fillColor(colors.muted).text(`Generated: ${new Date().toLocaleDateString()}`, { align: 'center' });
+  doc.fontSize(10).fillColor(colors.muted).text(`Report Generated: ${new Date().toLocaleDateString()}`, { align: 'center' });
   doc.text(`Total Issues Found: ${report.length}`, { align: 'center' });
   doc.moveDown(4);
   doc.fontSize(10).fillColor(colors.muted).text('This report was generated with AI assistance.', { align: 'center' });
@@ -111,8 +125,18 @@ function generateReport(doc, report) {
     // Issue title
     doc.fontSize(14).fillColor(colors.text).text(item.issue, 140, startY, { width: 450 });
     
+    // Location (if available)
+    if (item.location) {
+      doc.fontSize(10).fillColor(colors.muted).text(`Location: ${item.location}`, 140, doc.y);
+    }
+    
     // Description
     doc.fontSize(11).fillColor(colors.muted).text(item.description, 140, doc.y, { width: 450, indent: 0 });
+    
+    // Recommendation
+    if (item.recommendation) {
+      doc.fontSize(10).fillColor(colors.primary).text(`Recommendation: ${item.recommendation}`, 140, doc.y);
+    }
     
     // Confidence
     doc.fontSize(9).fillColor(colors.muted).text(`Confidence: ${Math.round(item.confidence * 100)}%`, 140, doc.y);

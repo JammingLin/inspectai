@@ -8,3 +8,4 @@ dist
 deploy.tar.gz
 coverage
 .nyc_output
+.env*.local

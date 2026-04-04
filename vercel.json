@@ -1,5 +1,14 @@
 {
   "version": 2,
+  "regions": ["hkg1"],
+  "functions": {
+    "api/analyze.js": {
+      "maxDuration": 60
+    },
+    "api/export-pdf.js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/app", "destination": "/app.html" },

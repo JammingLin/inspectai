@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>InspectAI — Create Report</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <style>
@@ -87,6 +88,13 @@
       line-height: 1.6; resize: vertical; min-height: 80px;
     }
     .result-description:focus { outline: none; border-color: var(--accent); }
+    .result-recommendation {
+      background: rgba(0,212,255,0.05);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 8px;
+    }
     .result-meta { display: flex; gap: 16px; font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
     
     /* Actions */
@@ -118,12 +126,136 @@
     /* Empty State */
     .empty-state { text-align: center; padding: 60px 24px; color: var(--muted); }
     .empty-state-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+    
+    /* Progress Bar */
+    .progress-container {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .progress-container.active { display: block; }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .progress-title {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+    .progress-count {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .progress-bar {
+      height: 8px;
+      background: var(--bg2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    .progress-status {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+    
+    /* Retry Button */
+    .retry-container {
+      display: none;
+      text-align: center;
+      padding: 24px;
+      background: rgba(255,107,53,0.1);
+      border: 1px solid var(--warn);
+      border-radius: 8px;
+      margin-bottom: 32px;
+    }
+    .retry-container.active { display: block; }
+    .retry-text {
+      color: var(--warn);
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .btn-retry {
+      background: var(--warn);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-retry:hover {
+      background: #ff8557;
+      transform: translateY(-1px);
+    }
+    
+    /* Property Form */
+    .property-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .form-row:last-child { margin-bottom: 0; }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-group label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .form-group input {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: var(--font-display);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus { border-color: var(--accent); }
+    .form-group input::placeholder { color: var(--muted); }
+    @media (max-width: 640px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <nav>
     <div class="logo">Inspect<span>AI</span></div>
     <div class="nav-links">
+      <a href="reports.html">My Reports</a>
       <a href="index.html">← Back to Landing</a>
     </div>
   </nav>
@@ -131,6 +263,44 @@
   <div class="container">
     <h1>Create New Report</h1>
     <p class="subtitle">Upload photos of property issues. AI will analyze and generate professional descriptions.</p>
+    
+    <!-- Property Info Form -->
+    <div class="property-form" id="propertyForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="propertyAddress">Property Address</label>
+          <input type="text" id="propertyAddress" placeholder="123 Main St, City, State 12345" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="inspectorName">Inspector Name</label>
+          <input type="text" id="inspectorName" placeholder="John Smith" />
+        </div>
+        <div class="form-group">
+          <label for="inspectionDate">Inspection Date</label>
+          <input type="date" id="inspectionDate" />
+        </div>
+      </div>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-header">
+        <div class="progress-title">⏳ Analyzing Photos...</div>
+        <div class="progress-count" id="progressCount">0 / 0</div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-status" id="progressStatus">Starting analysis...</div>
+    </div>
+    
+    <!-- Retry Container -->
+    <div class="retry-container" id="retryContainer">
+      <div class="retry-text">⚠️ Analysis failed. Network error or API timeout.</div>
+      <button class="btn-retry" id="retryBtn">🔄 Try Again</button>
+    </div>
     
     <!-- Upload Zone -->
     <div class="upload-zone" id="uploadZone">
@@ -161,8 +331,9 @@
       <div id="resultsList"></div>
       
       <div class="actions">
-        <button class="btn btn-primary" id="exportPdfBtn">📄 Export PDF Report</button>
-        <button class="btn btn-secondary" id="newReportBtn">Start New Report</button>
+        <button class="btn btn-primary" id="exportPdfBtn">📄 Export PDF</button>
+        <button class="btn btn-secondary" id="saveReportBtn">💾 Save to Cloud</button>
+        <button class="btn btn-secondary" id="newReportBtn">Start New</button>
       </div>
     </div>
     
@@ -181,13 +352,41 @@
     const analyzeBtn = document.getElementById('analyzeBtn');
     const clearBtn = document.getElementById('clearBtn');
     const loading = document.getElementById('loading');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressCount = document.getElementById('progressCount');
+    const progressStatus = document.getElementById('progressStatus');
+    const retryContainer = document.getElementById('retryContainer');
+    const retryBtn = document.getElementById('retryBtn');
     const results = document.getElementById('results');
     const resultsList = document.getElementById('resultsList');
     const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const saveReportBtn = document.getElementById('saveReportBtn');
     const newReportBtn = document.getElementById('newReportBtn');
     const emptyState = document.getElementById('emptyState');
     
     let photos = [];
+    let retryCount = 0;
+    const MAX_RETRIES = 2;
+    let propertyInfo = {
+      address: '',
+      inspectorName: '',
+      inspectionDate: new Date().toISOString().split('T')[0]
+    };
+    
+    // Set default date
+    document.getElementById('inspectionDate').value = propertyInfo.inspectionDate;
+    
+    // Property form listeners
+    document.getElementById('propertyAddress').addEventListener('input', (e) => {
+      propertyInfo.address = e.target.value;
+    });
+    document.getElementById('inspectorName').addEventListener('input', (e) => {
+      propertyInfo.inspectorName = e.target.value;
+    });
+    document.getElementById('inspectionDate').addEventListener('input', (e) => {
+      propertyInfo.inspectionDate = e.target.value;
+    });
     
     // Upload handlers
     uploadZone.addEventListener('click', () => fileInput.click());
@@ -248,32 +447,70 @@
       results.classList.remove('active');
     });
     
-    // Analyze
-    analyzeBtn.addEventListener('click', async () => {
-      loading.classList.add('active');
+    // Analyze with progress tracking and retry
+    analyzeBtn.addEventListener('click', () => startAnalysis());
+    
+    retryBtn.addEventListener('click', () => {
+      retryContainer.classList.remove('active');
+      startAnalysis();
+    });
+    
+    async function startAnalysis() {
+      retryCount = 0;
+      await performAnalysis();
+    }
+    
+    async function performAnalysis() {
+      progressContainer.classList.add('active');
       analyzeActions.style.display = 'none';
+      retryContainer.classList.remove('active');
       
       try {
-        // Upload images and get base64
-        const imagePromises = photos.map(async (photo) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(photo.file);
-          return new Promise((resolve) => {
-            reader.onload = () => resolve({ id: photo.id, base64: reader.result });
-          });
-        });
-        const imageData = await Promise.all(imagePromises);
+        // Compress and convert images to base64
+        updateProgress(0, photos.length, 'Compressing photos...');
+        const imageData = [];
+        for (let i = 0; i < photos.length; i++) {
+          const compressed = await compressImage(photos[i].file, 1024, 0.8);
+          imageData.push({ id: photos[i].id, base64: compressed });
+        }
         
-        // Call AI analysis API
-        const response = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ images: imageData })
-        });
+        // Analyze images one by one with progress updates
+        const results = [];
+        for (let i = 0; i < imageData.length; i++) {
+          const img = imageData[i];
+          updateProgress(i + 1, imageData.length, `Analyzing photo ${i + 1} of ${imageData.length}...`);
+          
+          try {
+            const response = await fetch('/api/analyze', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ images: [img] })
+            });
+            
+            if (!response.ok) {
+              throw new Error(`API error: ${response.status}`);
+            }
+            
+            const imgResults = await response.json();
+            if (imgResults && imgResults.length > 0) {
+              results.push(imgResults[0]);
+            }
+          } catch (imgError) {
+            console.error(`Failed to analyze image ${img.id}:`, imgError);
+            // Add placeholder result for failed image
+            results.push({
+              id: img.id,
+              issue: 'Analysis Failed',
+              severity: 'minor',
+              description: 'Unable to analyze this image. Please try again or upload a clearer photo.',
+              confidence: 0,
+              location: '',
+              recommendation: 'Manual inspection recommended'
+            });
+          }
+        }
         
-        if (!response.ok) throw new Error('Analysis failed');
-        
-        const results = await response.json();
+        updateProgress(imageData.length, imageData.length, 'Analysis complete!');
         
         // Update photos with results
         photos = photos.map(photo => {
@@ -281,15 +518,57 @@
           return { ...photo, analyzing: false, result };
         });
         
+        // Small delay before showing results
+        await new Promise(resolve => setTimeout(resolve, 500));
+        progressContainer.classList.remove('active');
         renderResults();
+        
       } catch (error) {
         console.error('Analysis error:', error);
-        alert('Analysis failed. Please try again.');
-        analyzeActions.style.display = 'flex';
+        progressContainer.classList.remove('active');
+        
+        // Show retry option
+        if (retryCount < MAX_RETRIES) {
+          retryCount++;
+          retryContainer.classList.add('active');
+          document.querySelector('.retry-text').textContent = `⚠️ Analysis failed. ${MAX_RETRIES - retryCount + 1} retry attempts remaining.`;
+        } else {
+          alert('Analysis failed after multiple attempts. Please check your connection and try again.');
+          analyzeActions.style.display = 'flex';
+        }
       }
-      
-      loading.classList.remove('active');
-    });
+    }
+    
+    function updateProgress(current, total, status) {
+      const percent = (current / total) * 100;
+      progressFill.style.width = `${percent}%`;
+      progressCount.textContent = `${current} / ${total}`;
+      progressStatus.textContent = status;
+    }
+    
+    // Compress image to reduce base64 size
+    function compressImage(file, maxSize, quality) {
+      return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width;
+          let h = img.height;
+          // Scale down if larger than maxSize
+          if (w > maxSize || h > maxSize) {
+            const ratio = Math.min(maxSize / w, maxSize / h);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+          }
+          canvas.width = w;
+          canvas.height = h;
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = URL.createObjectURL(file);
+      });
+    }
     
     function renderResults() {
       resultsList.innerHTML = photos.filter(p => p.result).map(photo => `
@@ -300,7 +579,13 @@
               <span class="issue-badge ${photo.result.severity}">${photo.result.severity}</span>
               <strong>${photo.result.issue}</strong>
             </div>
-            <textarea class="result-description" data-id="${photo.id}">${photo.result.description}</textarea>
+            <textarea class="result-description" data-id="${photo.id}">${photo.result.description || ''}</textarea>
+            ${photo.result.recommendation ? `
+              <div class="result-recommendation">
+                <strong style="color: var(--accent); font-size: 12px;">Recommendation:</strong>
+                <div style="color: var(--muted); font-size: 13px; margin-top: 4px;">${photo.result.recommendation}</div>
+              </div>
+            ` : ''}
             <div class="result-meta">
               <span>Confidence: ${Math.round(photo.result.confidence * 100)}%</span>
               <span>Location: ${photo.result.location || 'Not specified'}</span>
@@ -320,23 +605,104 @@
       });
     }
     
+    // Save Report to IndexedDB
+    saveReportBtn.addEventListener('click', async () => {
+      const analyzedPhotos = photos.filter(p => p.result);
+      if (analyzedPhotos.length === 0) {
+        alert('Please analyze photos before saving.');
+        return;
+      }
+      
+      saveReportBtn.disabled = true;
+      saveReportBtn.textContent = '⏳ Saving...';
+      
+      try {
+        const reportData = analyzedPhotos.map(p => ({
+          image: p.src,
+          issue: p.result.issue,
+          severity: p.result.severity,
+          description: p.result.description,
+          confidence: p.result.confidence,
+          location: p.result.location,
+          recommendation: p.result.recommendation
+        }));
+        
+        const reportId = `report-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        const report = {
+          id: reportId,
+          createdAt: new Date().toISOString(),
+          propertyInfo: propertyInfo,
+          findings: reportData,
+          totalIssues: reportData.length,
+          severityCounts: {
+            critical: reportData.filter(r => r.severity === 'critical').length,
+            moderate: reportData.filter(r => r.severity === 'moderate').length,
+            minor: reportData.filter(r => r.severity === 'minor').length,
+          }
+        };
+        
+        // Save to IndexedDB
+        const db = await openDatabase();
+        await saveReportToDB(db, report);
+        
+        alert(`✓ Report saved successfully!\n\nReport ID: ${reportId}\n\nView it in "My Reports" page.`);
+        
+      } catch (error) {
+        console.error('Save error:', error);
+        alert('Failed to save report: ' + error.message);
+      }
+      
+      saveReportBtn.disabled = false;
+      saveReportBtn.textContent = '💾 Save Report';
+    });
+    
+    // IndexedDB helpers
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('InspectAI', 1);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('reports')) {
+            db.createObjectStore('reports', { keyPath: 'id' });
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+    
+    function saveReportToDB(db, report) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('reports', 'readwrite');
+        const store = tx.objectStore('reports');
+        const request = store.add(report);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    }
+    
     // Export PDF
     exportPdfBtn.addEventListener('click', async () => {
       const analyzedPhotos = photos.filter(p => p.result);
       if (analyzedPhotos.length === 0) return;
       
       const reportData = analyzedPhotos.map(p => ({
-        image: p.src,
         issue: p.result.issue,
         severity: p.result.severity,
         description: p.result.description,
-        confidence: p.result.confidence
+        confidence: p.result.confidence,
+        location: p.result.location,
+        recommendation: p.result.recommendation
       }));
       
       const response = await fetch('/api/export-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ report: reportData })
+        body: JSON.stringify({ 
+          report: reportData,
+          propertyInfo: propertyInfo
+        })
       });
       
       if (!response.ok) {

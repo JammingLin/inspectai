@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>InspectAI — 我的报告</title>
+  <title>InspectAI — My Reports</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -143,26 +143,26 @@
   <nav>
     <div class="logo">Inspect<span>AI</span></div>
     <div class="nav-links">
-      <a href="app.html">创建报告</a>
-      <a href="index.html">← 返回首页</a>
+      <a href="app.html">Create Report</a>
+      <a href="index.html">← Home</a>
     </div>
   </nav>
 
   <div class="container">
-    <h1>我的报告</h1>
-    <p class="subtitle">查看和管理已保存的检测报告。</p>
+    <h1>My Reports</h1>
+    <p class="subtitle">View and manage your saved inspection reports.</p>
     
     <div id="loading" class="loading">
       <div class="spinner"></div>
-      <div>正在加载报告...</div>
+      <div>Loading reports...</div>
     </div>
     
     <div id="emptyState" class="empty-state" style="display: none;">
       <div class="empty-state-icon">📋</div>
-      <h2>暂无报告</h2>
-      <p style="margin-top: 12px;">创建您的第一份检测报告。</p>
+      <h2>No reports yet</h2>
+      <p style="margin-top: 12px;">Create your first inspection report to see it here.</p>
       <div class="empty-state-actions">
-        <a href="app.html" class="btn btn-primary">创建报告 →</a>
+        <a href="app.html" class="btn btn-primary">Create Report →</a>
       </div>
     </div>
     
@@ -257,33 +257,33 @@
           <div class="report-card">
             <div class="report-header">
               <div>
-                <div class="report-address">${report.propertyInfo?.address || '未填写地址'}</div>
-                <div class="report-date">${new Date(report.createdAt).toLocaleDateString('zh-CN')}</div>
+                <div class="report-address">${report.propertyInfo?.address || 'No Address'}</div>
+                <div class="report-date">${new Date(report.createdAt).toLocaleDateString()}</div>
               </div>
             </div>
-            <div class="report-inspector">检测员：${report.propertyInfo?.inspectorName || '未填写'}</div>
+            <div class="report-inspector">Inspector: ${report.propertyInfo?.inspectorName || 'Not specified'}</div>
             <div class="report-stats">
               <div class="stat">
                 <span class="stat-num critical">${report.severityCounts?.critical || 0}</span>
-                <span class="stat-label">严重</span>
+                <span class="stat-label">Critical</span>
               </div>
               <div class="stat">
                 <span class="stat-num moderate">${report.severityCounts?.moderate || 0}</span>
-                <span class="stat-label">中等</span>
+                <span class="stat-label">Moderate</span>
               </div>
               <div class="stat">
                 <span class="stat-num minor">${report.severityCounts?.minor || 0}</span>
-                <span class="stat-label">轻微</span>
+                <span class="stat-label">Minor</span>
               </div>
               <div class="stat">
                 <span class="stat-num" style="color: var(--text)">${report.totalIssues || 0}</span>
-                <span class="stat-label">总计</span>
+                <span class="stat-label">Total</span>
               </div>
             </div>
             <div class="report-actions">
-              <button class="btn btn-secondary btn-sm" onclick="viewReport('${report.id}')">👁️ 查看</button>
-              <button class="btn btn-secondary btn-sm" onclick="exportReportPDF('${report.id}')">📄 导出 PDF</button>
-              <button class="btn btn-danger btn-sm" onclick="confirmDelete('${report.id}')">🗑️ 删除</button>
+              <button class="btn btn-secondary btn-sm" onclick="viewReport('${report.id}')">👁️ View</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportReportPDF('${report.id}')">📄 Export PDF</button>
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('${report.id}')">🗑️ Delete</button>
             </div>
           </div>
         `).join('');
@@ -291,7 +291,7 @@
         console.error('Load reports error:', error);
         document.getElementById('loading').style.display = 'none';
         document.getElementById('emptyState').style.display = 'block';
-        document.querySelector('#emptyState h2').textContent = '加载失败';
+        document.querySelector('#emptyState h2').textContent = 'Load Failed';
         document.querySelector('#emptyState p').textContent = error.message;
       }
     }
@@ -299,7 +299,7 @@
     async function viewReport(reportId) {
       try {
         const report = await getReport(reportId);
-        if (!report) { showToast('未找到报告', '', 'error'); return; }
+        if (!report) { showToast('Report not found', '', 'error'); return; }
         
         const items = report.items || [];
         const info = report.propertyInfo || {};
@@ -308,51 +308,51 @@
         
         modal.innerHTML = `
           <button class="modal-close" onclick="closeModal()">✕</button>
-          <div class="modal-title">${info.address || '未填写地址'}</div>
+          <div class="modal-title">${info.address || 'No Address'}</div>
           <div class="modal-meta">
-            检测员：${info.inspectorName || '未填写'} &nbsp;|&nbsp; 
-            日期：${info.inspectionDate ? new Date(info.inspectionDate).toLocaleDateString('zh-CN') : '未填写'} &nbsp;|&nbsp;
-            创建时间：${new Date(report.createdAt).toLocaleString('zh-CN')}
+            Inspector: ${info.inspectorName || 'Not specified'} &nbsp;|&nbsp; 
+            Date: ${info.inspectionDate ? new Date(info.inspectionDate).toLocaleDateString() : 'Not specified'} &nbsp;|&nbsp;
+            Created: ${new Date(report.createdAt).toLocaleString()}
           </div>
           
           <div class="modal-summary">
             <div class="stat">
               <span class="stat-num critical">${report.severityCounts?.critical || 0}</span>
-              <span class="stat-label">严重</span>
+              <span class="stat-label">Critical</span>
             </div>
             <div class="stat">
               <span class="stat-num moderate">${report.severityCounts?.moderate || 0}</span>
-              <span class="stat-label">中等</span>
+              <span class="stat-label">Moderate</span>
             </div>
             <div class="stat">
               <span class="stat-num minor">${report.severityCounts?.minor || 0}</span>
-              <span class="stat-label">轻微</span>
+              <span class="stat-label">Minor</span>
             </div>
             <div class="stat">
               <span class="stat-num" style="color: var(--text)">${report.totalIssues || 0}</span>
-              <span class="stat-label">总计</span>
+              <span class="stat-label">Total</span>
             </div>
           </div>
           
           <div class="modal-actions">
-            <button class="btn btn-primary btn-sm" onclick="exportReportPDF('${reportId}')">📄 导出 PDF</button>
-            <button class="btn btn-secondary btn-sm" onclick="closeModal()">关闭</button>
+            <button class="btn btn-primary btn-sm" onclick="exportReportPDF('${reportId}')">📄 Export PDF</button>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal()">Close</button>
           </div>
           
           <div class="issue-list">
-            ${items.length === 0 ? '<div style="text-align:center;color:var(--muted);padding:40px;">暂无检测项目</div>' : 
+            ${items.length === 0 ? '<div style="text-align:center;color:var(--muted);padding:40px;">No inspection items</div>' : 
               items.map((item, i) => `
                 <div class="issue-card">
                   <div class="issue-top">
                     <span class="severity-badge ${item.severity || 'moderate'}">${
-                      {critical:'严重',moderate:'中等',minor:'轻微'}[item.severity] || item.severity || '未知'
+                      (item.severity || 'unknown').toUpperCase()
                     }</span>
-                    <span class="issue-title">${item.issue || '未知问题'}</span>
+                    <span class="issue-title">${item.issue || 'Unknown Issue'}</span>
                   </div>
                   ${item.location ? `<div class="issue-location">📍 ${item.location}</div>` : ''}
                   ${item.description ? `<div class="issue-desc">${item.description}</div>` : ''}
-                  ${item.recommendation ? `<div class="issue-rec">💡 建议：${item.recommendation}</div>` : ''}
-                  ${item.confidence ? `<div class="issue-confidence">置信度：${Math.round(item.confidence * 100)}%</div>` : ''}
+                  ${item.recommendation ? `<div class="issue-rec">💡 Recommendation: ${item.recommendation}</div>` : ''}
+                  ${item.confidence ? `<div class="issue-confidence">Confidence: ${Math.round(item.confidence * 100)}%</div>` : ''}
                 </div>
               `).join('')
             }
@@ -362,7 +362,7 @@
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
       } catch (error) {
-        showToast('加载失败', '', 'error');
+        showToast('Load Failed', '', 'error');
         console.error(error);
       }
     }
@@ -384,10 +384,10 @@
     async function exportReportPDF(reportId) {
       try {
         const report = await getReport(reportId);
-        if (!report) { showToast('未找到报告', '', 'error'); return; }
+        if (!report) { showToast('Report not found', '', 'error'); return; }
         
         if (!window.jspdf || !window.jspdf.jsPDF) {
-          showToast('PDF 库未加载', '请刷新页面后重试', 'error');
+          showToast('PDF library not loaded', 'Please refresh and try again', 'error');
           return;
         }
         
@@ -447,21 +447,21 @@
         });
         
         doc.save(`inspection-report-${reportId}.pdf`);
-        showToast('导出成功', 'PDF 已下载');
+        showToast('Exported', 'PDF downloaded');
       } catch (err) {
-        showToast('导出失败', err.message, 'error');
+        showToast('Export Failed', err.message, 'error');
         console.error(err);
       }
     }
     
     async function confirmDelete(reportId) {
-      if (confirm('确定要删除这份报告吗？此操作不可撤销。')) {
+      if (confirm('Are you sure you want to delete this report? This cannot be undone.')) {
         try {
           await deleteReport(reportId);
-          showToast('删除成功', '报告已删除');
+          showToast('Deleted', 'Report deleted');
           loadReports();
         } catch (error) {
-          showToast('删除失败', error.message, 'error');
+          showToast('Delete Failed', error.message, 'error');
         }
       }
     }

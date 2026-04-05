@@ -117,17 +117,16 @@
     }
   </style>
 </head>
-<body>
+<body onload="auth.initNav()">
 
-<nav>
-  <a href="/" class="logo">Inspect<span>AI</span></a>
-  <div class="nav-links">
-    <a href="/">Home</a>
-    <a href="/blog">Blog</a>
-    <a href="/app" class="btn-nav">Try Free →</a>
-    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"><span class="icon-sun">☀️</span><span class="icon-moon">🌙</span></button>
-  </div>
-</nav>
+  <nav onload="auth.initNav()">
+    <a href="/" class="logo">Inspect<span>AI</span></a>
+    <div class="nav-links">
+      <a href="/pricing">Pricing</a>
+      <div id="authArea"></div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"><span class="icon-sun">☀️</span><span class="icon-moon">🌙</span></button>
+    </div>
+  </nav>
 
 <div class="hero">
   <span class="tag">// Pricing</span>

@@ -1,5 +1,6 @@
 // api/paypal-create-order.js
 // 创建 PayPal 订单（积分包 + 订阅均用此接口）
+// runtime: nodejs (需要 Buffer)
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
     const tokenRes = await fetch(`${BASE}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
+        'Authorization': 'Basic ' + btoa(`${CLIENT_ID}:${CLIENT_SECRET}`),
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: 'grant_type=client_credentials',

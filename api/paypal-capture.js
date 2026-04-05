@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     const tokenRes = await fetch(`${BASE}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
+        'Authorization': 'Basic ' + btoa(`${CLIENT_ID}:${CLIENT_SECRET}`),
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: 'grant_type=client_credentials',
@@ -57,7 +57,7 @@ export default async function handler(req, res) {
       try {
         // 解析用户 sub
         const [, payload] = userToken.split('.');
-        const { sub } = JSON.parse(Buffer.from(payload.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
+        const { sub } = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
         const creditsKey = `credits:${sub}`;
 
         // 读取现有 credits

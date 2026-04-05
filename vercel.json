@@ -7,6 +7,15 @@
     },
     "api/export-pdf.js": {
       "maxDuration": 60
+    },
+    "api/paypal-create-order.js": {
+      "maxDuration": 30
+    },
+    "api/paypal-capture.js": {
+      "maxDuration": 30
+    },
+    "api/user-credits.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [

@@ -59,7 +59,8 @@ export default async function handler(req, res) {
         purchase_units: [{
           amount: { currency_code: 'USD', value: item.amount },
           description: item.label,
-          custom_id: `credits_${item.credits}`,
+          // 格式：credits:数量:subId
+          custom_id: `credits_${item.credits}:${req.headers['x-user-sub'] || 'guest'}`,
         }],
         application_context: {
           brand_name: 'InspectAI',

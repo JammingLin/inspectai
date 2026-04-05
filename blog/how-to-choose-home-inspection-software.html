@@ -7,24 +7,16 @@
   <meta name="description" content="对比主流房屋检测软件，从功能、价格、易用性等维度分析，帮助检测师选择最适合的工具。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/theme.css" />
+  <script src="/theme.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #080c10; --bg2: #0d1117; --surface: #111820; --border: #1e2d3d;
-      --accent: #00d4ff; --accent2: #00ff9d; --warn: #ff6b35; --text: #e2e8f0; --muted: #64748b;
-      --font-display: 'Outfit', 'Noto Sans SC', sans-serif; --font-mono: 'JetBrains Mono', monospace;
-    }
     html { scroll-behavior: smooth; }
     body { background: var(--bg); color: var(--text); font-family: var(--font-display); overflow-x: hidden; }
-    body::before {
-      content: ''; position: fixed; inset: 0;
-      background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
-      background-size: 40px 40px; pointer-events: none; z-index: 0;
-    }
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between; padding: 20px 48px;
-      background: rgba(8,12,16,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+      background: var(--nav-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
     }
     .logo { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
     .logo span { color: var(--accent2); }

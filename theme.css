@@ -2,27 +2,27 @@
 
 /* ===== Light Theme (default) ===== */
 :root {
-  --bg: #f7f8fa;
-  --bg2: #eef0f4;
+  --bg: #f9fafb;
+  --bg2: #f0f2f5;
   --surface: #ffffff;
-  --border: #dde1e8;
-  --accent: #0088cc;
-  --accent2: #00a86b;
-  --warn: #e95420;
-  --text: #1a1d23;
-  --muted: #6b7280;
+  --border: #e0e4ea;
+  --accent: #2563eb;
+  --accent2: #059669;
+  --warn: #ea580c;
+  --text: #334155;
+  --muted: #94a3b8;
   --font-display: 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --grid-color: rgba(0, 136, 204, 0.04);
-  --nav-bg: rgba(247, 248, 250, 0.92);
-  --card-shadow: 0 2px 16px rgba(0,0,0,0.06);
-  --card-hover-shadow: 0 12px 40px rgba(0,0,0,0.1);
-  --featured-bg: linear-gradient(160deg, rgba(0,136,204,0.06) 0%, rgba(0,168,107,0.03) 100%);
-  --featured-glow: 0 0 40px rgba(0,136,204,0.08);
+  --grid-color: rgba(37, 99, 235, 0.03);
+  --nav-bg: rgba(249, 250, 251, 0.92);
+  --card-shadow: 0 2px 16px rgba(0,0,0,0.05);
+  --card-hover-shadow: 0 12px 40px rgba(0,0,0,0.08);
+  --featured-bg: linear-gradient(160deg, rgba(37,99,235,0.05) 0%, rgba(5,150,105,0.03) 100%);
+  --featured-glow: 0 0 40px rgba(37,99,235,0.06);
   --badge-text: #ffffff;
   --modal-bg: #ffffff;
-  --toast-bg: #1a1d23;
-  --toast-text: #ffffff;
+  --toast-bg: #1e293b;
+  --toast-text: #f1f5f9;
 }
 
 /* ===== Dark Theme ===== */

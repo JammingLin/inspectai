@@ -13,6 +13,7 @@
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/app", "destination": "/app.html" },
     { "source": "/app.html", "destination": "/app.html" },
+    { "source": "/pricing", "destination": "/pricing.html" },
     { "source": "/(.*)", "destination": "/$1" }
   ]
 }

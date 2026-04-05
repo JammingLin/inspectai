@@ -23,7 +23,8 @@
           </div>
         `;
       } else {
-        authArea.innerHTML = `<button class="btn-nav" onclick="window.location.href='/app'">Sign In</button>`;
+        // 补上缺失的 Sign In 按钮
+        authArea.innerHTML = `<a href="/app" class="btn-nav">Sign In</a>`;
       }
     }
   };

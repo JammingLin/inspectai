@@ -323,8 +323,23 @@
     } catch (err) { showToast('⚠ Payment coming soon! Stay tuned.'); }
   }
 
-  function buyCredits(pack) {
-    showToast('💳 Credit pack purchases coming soon via PayPal!');
+  async function buyCredits(pack) {
+    showToast('Connecting to PayPal...');
+    try {
+      const res = await fetch('/api/paypal-create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pack }),
+      });
+      const data = await res.json();
+      if (data.approveUrl) {
+        window.location.href = data.approveUrl;
+      } else {
+        showToast('⚠ ' + (data.error || 'Something went wrong. Please try again.'));
+      }
+    } catch (err) {
+      showToast('⚠ Network error. Please try again.');
+    }
   }
 
   const params = new URLSearchParams(window.location.search);

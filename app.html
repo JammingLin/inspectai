@@ -489,6 +489,39 @@
     // ===== Credits =====
     let userCredits = null;
 
+    // Handle PayPal return (capture payment)
+    (async function handlePayPalReturn() {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token'); // PayPal order ID
+      const payment = params.get('payment');
+
+      if (token && payment !== 'success') {
+        showToast('Processing payment...');
+        try {
+          const userInfo = JSON.parse(localStorage.getItem('inspectai_user') || '{}');
+          const res = await fetch('/api/paypal-capture', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: token, userToken: userInfo.token || null }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            userCredits = data.newCredits;
+            updateCreditsBadge();
+            showToast(`✅ Payment successful! ${data.creditsAdded} credits added.`);
+            // Clean URL
+            window.history.replaceState({}, '', '/app?payment=success');
+          } else {
+            showToast('⚠ Payment verification failed. Contact support.');
+          }
+        } catch (e) {
+          showToast('⚠ Could not verify payment. Contact support.');
+        }
+      } else if (payment === 'success') {
+        showToast('✅ Payment successful! Credits added to your account.');
+      }
+    })();
+
     async function fetchAndShowCredits() {
       if (!currentUser?.token) return;
       try {

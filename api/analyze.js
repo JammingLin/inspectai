@@ -2,11 +2,45 @@
 // Edge Functions have no 10s timeout limit on Hobby plan
 export const config = { runtime: 'edge' };
 
+// ---- KV helpers ----
+async function kvGet(key) {
+  const url = `${process.env.KV_REST_API_URL}/get/${encodeURIComponent(key)}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` },
+  });
+  const data = await res.json();
+  return data.result ?? null;
+}
+
+async function kvSet(key, value) {
+  const url = `${process.env.KV_REST_API_URL}/set/${encodeURIComponent(key)}`;
+  await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ value: String(value) }),
+  });
+}
+
+// ---- Parse Google ID token (edge-friendly) ----
+function parseGoogleToken(idToken) {
+  try {
+    const [, payload] = idToken.split('.');
+    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    if (!decoded.sub) return null;
+    return { sub: decoded.sub, email: decoded.email };
+  } catch {
+    return null;
+  }
+}
+
 export default async function handler(req) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json',
   };
 
@@ -17,6 +51,47 @@ export default async function handler(req) {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { headers, status: 405 });
   }
+
+  // ---- Credits check ----
+  const authHeader = req.headers.get('authorization') || '';
+  const idToken = authHeader.replace('Bearer ', '').trim();
+
+  if (!idToken) {
+    return new Response(JSON.stringify({ error: 'login_required', message: 'Please sign in to analyze photos.' }), { headers, status: 401 });
+  }
+
+  const user = parseGoogleToken(idToken);
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'invalid_token', message: 'Invalid session. Please sign in again.' }), { headers, status: 401 });
+  }
+
+  const creditsKey = `credits:${user.sub}`;
+  const initKey = `init:${user.email}`;
+
+  // Initialize new user credits
+  let credits = await kvGet(creditsKey);
+  if (credits === null) {
+    const alreadyInit = await kvGet(initKey);
+    if (!alreadyInit) {
+      await kvSet(creditsKey, 3);
+      await kvSet(initKey, '1');
+      credits = 3;
+    } else {
+      credits = 0;
+    }
+  }
+  credits = Number(credits);
+
+  if (credits <= 0) {
+    return new Response(JSON.stringify({
+      error: 'no_credits',
+      message: 'You have used all your free credits.',
+      credits: 0
+    }), { headers, status: 402 });
+  }
+
+  // Deduct 1 credit before analysis
+  await kvSet(creditsKey, credits - 1);
 
   try {
     const body = await req.json();
@@ -32,7 +107,7 @@ export default async function handler(req) {
       results.push({ id: img.id, ...analysis });
     }
 
-    return new Response(JSON.stringify(results), { headers, status: 200 });
+    return new Response(JSON.stringify({ results, credits: credits - 1 }), { headers, status: 200 });
   } catch (error) {
     return new Response(JSON.stringify({ 
       error: 'Analysis failed',

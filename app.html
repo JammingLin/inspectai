@@ -38,8 +38,22 @@
     .user-name { font-family: var(--font-mono); font-size: 12px; color: var(--text); letter-spacing: 1px; }
     .btn-login { font-family: var(--font-mono); font-size: 12px; padding: 8px 16px; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s; }
     .btn-login:hover { background: var(--accent2); }
+    .credits-badge { font-family: var(--font-mono); font-size: 11px; background: var(--accent); color: var(--bg); padding: 3px 10px; border-radius: 20px; font-weight: 700; letter-spacing: 0.5px; }
+    .credits-badge.low { background: #f59e0b; }
+    .credits-badge.empty { background: #ef4444; }
     .btn-logout { font-family: var(--font-mono); font-size: 10px; padding: 4px 10px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.2s; }
     .btn-logout:hover { color: var(--warn); border-color: var(--warn); }
+    /* Credits Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal-box { background: #1a1a2e; border: 1px solid var(--border); border-radius: 16px; padding: 40px 36px; max-width: 420px; width: 90%; text-align: center; }
+    .modal-icon { font-size: 3rem; margin-bottom: 16px; }
+    .modal-box h2 { font-size: 1.4rem; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+    .modal-box p { font-size: 0.9rem; color: var(--muted); line-height: 1.6; margin-bottom: 28px; }
+    .modal-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-upgrade { background: var(--accent); color: var(--bg); border: none; padding: 12px 28px; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; transition: opacity 0.2s; }
+    .btn-upgrade:hover { opacity: 0.85; }
+    .btn-dismiss { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 12px 20px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; }
     
     /* Toast Notification */
     .toast-container { position: fixed; top: 80px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
@@ -442,6 +456,10 @@
       };
       localStorage.setItem('inspectai_user', JSON.stringify(currentUser));
       updateAuthUI();
+      // Close login modal if open
+      document.getElementById('loginModal').classList.remove('show');
+      // Fetch credits after login
+      fetchAndShowCredits();
     }
 
     function updateAuthUI() {
@@ -451,6 +469,7 @@
           <div class="user-area">
             <img class="user-avatar" src="${currentUser.picture}" alt="${currentUser.name}" referrerpolicy="no-referrer" />
             <span class="user-name">${currentUser.name}</span>
+            <span class="credits-badge" id="creditsBadge">... credits</span>
             <button class="btn-logout" onclick="handleSignOut()">Sign Out</button>
           </div>`;
       } else {
@@ -474,6 +493,30 @@
       }
     }
 
+    // ===== Credits =====
+    let userCredits = null;
+
+    async function fetchAndShowCredits() {
+      if (!currentUser?.token) return;
+      try {
+        const res = await fetch('/api/user-credits', {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+        const data = await res.json();
+        userCredits = data.credits ?? 0;
+        updateCreditsBadge();
+      } catch(e) { console.warn('Could not fetch credits', e); }
+    }
+
+    function updateCreditsBadge() {
+      const badge = document.getElementById('creditsBadge');
+      if (!badge) return;
+      badge.textContent = userCredits === 1 ? '1 credit left' : `${userCredits} credits`;
+      badge.className = 'credits-badge';
+      if (userCredits === 0) badge.classList.add('empty');
+      else if (userCredits === 1) badge.classList.add('low');
+    }
+
     // Init Google Auth
     window.addEventListener('load', () => {
       // Restore session
@@ -482,6 +525,7 @@
         try {
           currentUser = JSON.parse(saved);
           updateAuthUI();
+          fetchAndShowCredits();
         } catch(e) { localStorage.removeItem('inspectai_user'); }
       }
 
@@ -506,6 +550,15 @@
               { theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin_with' }
             );
           }
+        }
+
+        // Render button in login modal
+        const modalBtn = document.getElementById('loginModalGoogleBtn');
+        if (modalBtn) {
+          google.accounts.id.renderButton(
+            modalBtn,
+            { theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with' }
+          );
         }
       }
     });
@@ -622,6 +675,16 @@
     });
     
     async function startAnalysis() {
+      // Must be logged in
+      if (!currentUser) {
+        document.getElementById('loginModal').classList.add('show');
+        return;
+      }
+      // Must have credits
+      if (userCredits !== null && userCredits <= 0) {
+        document.getElementById('creditsModal').classList.add('show');
+        return;
+      }
       retryCount = 0;
       await performAnalysis();
     }
@@ -649,15 +712,37 @@
           try {
             const response = await fetch('/api/analyze', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                ...(currentUser?.token ? { 'Authorization': `Bearer ${currentUser.token}` } : {})
+              },
               body: JSON.stringify({ images: [img] })
             });
-            
+
+            if (response.status === 401) {
+              progressContainer.classList.remove('active');
+              document.getElementById('loginModal').classList.add('show');
+              return;
+            }
+            if (response.status === 402) {
+              progressContainer.classList.remove('active');
+              userCredits = 0;
+              updateCreditsBadge();
+              document.getElementById('creditsModal').classList.add('show');
+              return;
+            }
+
             if (!response.ok) {
               throw new Error(`API error: ${response.status}`);
             }
             
-            const imgResults = await response.json();
+            const respData = await response.json();
+            // API now returns { results: [...], credits: N }
+            const imgResults = respData.results || respData;
+            if (respData.credits !== undefined) {
+              userCredits = respData.credits;
+              updateCreditsBadge();
+            }
             if (imgResults && imgResults.length > 0) {
               results.push(imgResults[0]);
             }
@@ -1004,5 +1089,31 @@
       }
     });
   </script>
+<!-- Credits Exhausted Modal -->
+<div class="modal-overlay" id="creditsModal">
+  <div class="modal-box">
+    <div class="modal-icon">⚡</div>
+    <h2>You're out of credits</h2>
+    <p>You've used all 3 free reports. Upgrade to Pro for unlimited reports, no watermarks, and custom branding — starting at $39/month.</p>
+    <div class="modal-actions">
+      <a href="/pricing" class="btn-upgrade">View Pricing →</a>
+      <button class="btn-dismiss" onclick="document.getElementById('creditsModal').classList.remove('show')">Maybe Later</button>
+    </div>
+  </div>
+</div>
+
+<!-- Login Required Modal -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <h2>Sign in to continue</h2>
+    <p>Create a free account to get 3 reports on us. No credit card required.</p>
+    <div class="modal-actions">
+      <div id="loginModalGoogleBtn"></div>
+      <button class="btn-dismiss" onclick="document.getElementById('loginModal').classList.remove('show')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

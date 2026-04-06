@@ -50,6 +50,7 @@
       color: var(--accent);
       letter-spacing: 2px;
       text-transform: uppercase;
+      text-decoration: none;
     }
     .logo span { color: var(--accent2); }
 
@@ -418,7 +419,7 @@
     }
     footer a:hover { text-decoration: underline; }
 
-    footer-links {
+    .footer-links {
       display: flex;
       gap: 24px;
       justify-content: center;
@@ -434,9 +435,10 @@
     }
   </style>
 </head>
-<body>
+<body onload="auth.initNav()">
+
   <nav>
-    <div class="logo">Inspect<span>AI</span></div>
+    <a href="/" class="logo">Inspect<span>AI</span></a>
     <div class="nav-links">
       <a href="#features">Features</a>
       <a href="/pricing">Pricing</a>
@@ -559,7 +561,7 @@
         <li>Email support</li>
         <li>14-day free trial</li>
       </ul>
-      <a href="#" class="btn-pricing" onclick="document.getElementById('email').focus(); return false;">Start Free Trial</a>
+      <a href="/app" class="btn-pricing">Start Free Trial</a>
     </div>
   </section>
 
@@ -571,9 +573,5 @@
     </div>
     <p>&copy; 2026 InspectAI. Built for home inspectors, by people who understand the job.</p>
   </footer>
-
-  <script>
-    // Theme toggle is handled by theme.js
-  </script>
 </body>
 </html>

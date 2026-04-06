@@ -51,17 +51,12 @@ export default async function handler(req) {
   try {
     if (req.method === 'OPTIONS') return new Response(null, { headers: HEADERS, status: 200 });
 
-    // Auth
     const authHeader = req.headers.get('authorization') || '';
     const idToken = authHeader.replace('Bearer ', '').trim();
-    if (!idToken) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { headers: HEADERS, status: 401 });
-    }
+    if (!idToken) return new Response(JSON.stringify({ error: 'Unauthorized' }), { headers: HEADERS, status: 401 });
 
     const user = await verifyGoogleToken(idToken);
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }), { headers: HEADERS, status: 401 });
-    }
+    if (!user) return new Response(JSON.stringify({ error: 'Invalid token' }), { headers: HEADERS, status: 401 });
 
     const creditsKey = `credits:${user.sub}`;
     const initKey = `init:${user.email}`;
@@ -78,15 +73,21 @@ export default async function handler(req) {
           credits = 0;
         }
       }
+      // Unlimited for test user
+      if (user.email === 'arvilinam@gmail.com') credits = 9999;
       return new Response(JSON.stringify({ credits: Number(credits), email: user.email }), { headers: HEADERS, status: 200 });
     }
 
     if (req.method === 'POST') {
+      // Skip decrement for test user
+      if (user.email === 'arvilinam@gmail.com') {
+        return new Response(JSON.stringify({ credits: 9999, used: 0 }), { headers: HEADERS, status: 200 });
+      }
+
       let credits = await kvGet(creditsKey);
       credits = credits !== null ? Number(credits) : 0;
-      if (credits <= 0) {
-        return new Response(JSON.stringify({ error: 'No credits remaining', credits: 0 }), { headers: HEADERS, status: 402 });
-      }
+      if (credits <= 0) return new Response(JSON.stringify({ error: 'No credits remaining', credits: 0 }), { headers: HEADERS, status: 402 });
+      
       await kvSet(creditsKey, credits - 1);
       return new Response(JSON.stringify({ credits: credits - 1, used: 1 }), { headers: HEADERS, status: 200 });
     }

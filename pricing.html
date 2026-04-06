@@ -9,58 +9,82 @@
   <script src="/theme.js"></script>
   <script src="/auth.js"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: var(--font-display); padding-top: 100px; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-display); min-height: 100vh; }
     nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 48px; background: var(--nav-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
     .logo { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; text-decoration: none; }
-    .nav-links { display: flex; gap: 32px; align-items: center; }
-    .pricing-container { max-width: 1000px; margin: 0 auto; padding: 60px 24px; text-align: center; }
-    h1 { font-size: 48px; font-weight: 800; margin-bottom: 24px; }
-    .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; margin-top: 60px; }
-    .plan-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px; text-align: left; }
-    .plan-card h3 { font-size: 24px; margin-bottom: 12px; }
-    .price { font-size: 48px; font-weight: 800; color: var(--accent); margin-bottom: 24px; }
-    .plan-card ul { list-style: none; margin-bottom: 32px; }
-    .plan-card li { padding: 8px 0; color: var(--muted); }
-    .plan-card li::before { content: '✓'; color: var(--accent2); margin-right: 8px; }
-    .btn-cta { width: 100%; padding: 16px; background: var(--accent); color: var(--bg); border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .pricing-container { max-width: 1100px; margin: 160px auto 100px; padding: 0 24px; text-align: center; }
+    h1 { font-size: 64px; font-weight: 800; margin-bottom: 24px; letter-spacing: -1px; }
+    .subtitle { font-size: 20px; color: var(--muted); margin-bottom: 80px; }
+    
+    .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; align-items: start; }
+    .plan-card { 
+        background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 48px; 
+        transition: transform 0.3s, border-color 0.3s;
+    }
+    .plan-card:hover { border-color: var(--accent); transform: translateY(-10px); }
+    .plan-card.pro { border: 2px solid var(--accent); box-shadow: 0 0 40px rgba(0,212,255,0.1); }
+    
+    .price-tag { font-size: 48px; font-weight: 800; margin: 32px 0; color: var(--text); }
+    .price-tag span { font-size: 16px; color: var(--muted); font-weight: 400; }
+    .features-list { list-style: none; margin-bottom: 48px; text-align: left; }
+    .features-list li { padding: 12px 0; color: var(--text); display: flex; align-items: center; gap: 12px; }
+    .features-list li::before { content: '✓'; color: var(--accent2); font-weight: 700; }
+    
+    .btn-cta { 
+        width: 100%; padding: 16px; background: var(--accent); color: var(--bg); border: none; 
+        border-radius: 8px; font-weight: 700; cursor: pointer; text-decoration: none; display: block; text-align: center;
+    }
+    .btn-cta.secondary { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+    
+    @media (max-width: 768px) { h1 { font-size: 40px; } }
   </style>
 </head>
 <body onload="auth.initNav()">
   <nav>
     <a href="/" class="logo">Inspect<span>AI</span></a>
     <div class="nav-links">
-      <a href="/">Home</a>
       <div id="authArea"></div>
     </div>
   </nav>
 
   <div class="pricing-container">
     <h1>Simple, transparent pricing</h1>
-    <p>Launch special. Lock in early adopter pricing forever.</p>
+    <p class="subtitle">Pick the plan that scales with your inspection business.</p>
     
-    <div class="plans-grid">
+    <div class="plans">
       <div class="plan-card">
-        <h3>Pro</h3>
-        <div class="price">$49<span>/mo</span></div>
-        <ul>
-          <li>Unlimited AI Reports</li>
-          <li>Cloud Sync & PDF Export</li>
-          <li>Advanced Defect Detection</li>
-          <li>Custom Templates</li>
+        <h3>Basic</h3>
+        <div class="price-tag">$29<span>/mo</span></div>
+        <ul class="features-list">
+          <li>10 AI Reports/mo</li>
+          <li>Basic PDF Export</li>
+          <li>Email Support</li>
         </ul>
-        <button class="btn-cta" onclick="checkout('pro')">Subscribe</button>
+        <a href="/app" class="btn-cta secondary">Get Started</a>
       </div>
+      
+      <div class="plan-card pro">
+        <h3>Pro</h3>
+        <div class="price-tag">$49<span>/mo</span></div>
+        <ul class="features-list">
+          <li>Unlimited AI Reports</li>
+          <li>Custom Branding</li>
+          <li>Advanced Defect Detection</li>
+          <li>Priority Support</li>
+        </ul>
+        <a href="/app" class="btn-cta">Go Pro</a>
+      </div>
+      
       <div class="plan-card">
         <h3>Team</h3>
-        <div class="price">$149<span>/mo</span></div>
-        <ul>
-          <li>Up to 5 Inspector Accounts</li>
-          <li>Multi-user Collaboration</li>
-          <li>Priority Support</li>
-          <li>Custom Branding</li>
+        <div class="price-tag">$149<span>/mo</span></div>
+        <ul class="features-list">
+          <li>Everything in Pro</li>
+          <li>Up to 5 Users</li>
+          <li>Collaborative Reports</li>
+          <li>Team Analytics</li>
         </ul>
-        <button class="btn-cta" onclick="checkout('team')">Contact Sales</button>
+        <a href="mailto:hello@inspectai.cc" class="btn-cta secondary">Contact Sales</a>
       </div>
     </div>
   </div>

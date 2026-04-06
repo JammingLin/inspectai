@@ -4,94 +4,65 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pricing — InspectAI</title>
-  <meta name="description" content="Simple, transparent pricing for home inspection professionals." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/theme.css" />
   <script src="/theme.js"></script>
   <script src="/auth.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body { background: var(--bg); color: var(--text); font-family: var(--font-display); overflow-x: hidden; }
-    
-    /* Nav */
+    body { background: var(--bg); color: var(--text); font-family: var(--font-display); padding-top: 100px; }
     nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 48px; background: var(--nav-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
     .logo { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; text-decoration: none; }
-    .logo span { color: var(--accent2); }
     .nav-links { display: flex; gap: 32px; align-items: center; }
-    nav a { font-family: var(--font-mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 1px; text-transform: uppercase; transition: color 0.2s; }
-    nav a:hover { color: var(--accent); }
-    .btn-nav { background: transparent; border: 1px solid var(--accent); color: var(--accent) !important; padding: 8px 20px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
-    .user-avatar { width: 32px; height: 32px; border-radius: 50%; }
-    .user-profile { display: flex; align-items: center; gap: 12px; }
-    .credits-badge { font-family: var(--font-mono); font-size: 12px; color: var(--accent2); }
-    .sign-out-btn { border: none; background: none; color: var(--muted); cursor: pointer; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; }
-    
-    /* Pricing specific - simplified to just show content */
-    .pricing-hero { padding: 150px 24px 60px; text-align: center; }
-    .plans { max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .plan-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; text-align: center; }
-    .plan-cta { display: block; width: 100%; padding: 12px; background: var(--accent); color: var(--bg); border: none; border-radius: 8px; font-family: var(--font-mono); font-weight: 700; cursor: pointer; text-decoration: none; margin-top: 20px; }
-    .credit-packs { max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .credit-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; text-align: center; }
-    .credit-cta { display: block; width: 100%; padding: 12px; background: transparent; border: 1px solid var(--accent2); color: var(--accent2); border-radius: 8px; font-family: var(--font-mono); font-weight: 700; cursor: pointer; text-decoration: none; margin-top: 20px; }
-    
-    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); padding: 14px 20px; border-radius: 10px; opacity: 0; transition: all 0.3s; z-index: 9999; }
-    .toast.show { opacity: 1; }
+    .pricing-container { max-width: 1000px; margin: 0 auto; padding: 60px 24px; text-align: center; }
+    h1 { font-size: 48px; font-weight: 800; margin-bottom: 24px; }
+    .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; margin-top: 60px; }
+    .plan-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px; text-align: left; }
+    .plan-card h3 { font-size: 24px; margin-bottom: 12px; }
+    .price { font-size: 48px; font-weight: 800; color: var(--accent); margin-bottom: 24px; }
+    .plan-card ul { list-style: none; margin-bottom: 32px; }
+    .plan-card li { padding: 8px 0; color: var(--muted); }
+    .plan-card li::before { content: '✓'; color: var(--accent2); margin-right: 8px; }
+    .btn-cta { width: 100%; padding: 16px; background: var(--accent); color: var(--bg); border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
   </style>
 </head>
 <body onload="auth.initNav()">
-
   <nav>
     <a href="/" class="logo">Inspect<span>AI</span></a>
     <div class="nav-links">
-      <a href="/pricing">Pricing</a>
+      <a href="/">Home</a>
       <div id="authArea"></div>
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"><span class="icon-sun">☀️</span><span class="icon-moon">🌙</span></button>
     </div>
   </nav>
 
-  <div class="pricing-hero">
-    <h1>Pricing</h1>
-    <p>Choose the plan that fits your workflow.</p>
+  <div class="pricing-container">
+    <h1>Simple, transparent pricing</h1>
+    <p>Launch special. Lock in early adopter pricing forever.</p>
+    
+    <div class="plans-grid">
+      <div class="plan-card">
+        <h3>Pro</h3>
+        <div class="price">$49<span>/mo</span></div>
+        <ul>
+          <li>Unlimited AI Reports</li>
+          <li>Cloud Sync & PDF Export</li>
+          <li>Advanced Defect Detection</li>
+          <li>Custom Templates</li>
+        </ul>
+        <button class="btn-cta" onclick="checkout('pro')">Subscribe</button>
+      </div>
+      <div class="plan-card">
+        <h3>Team</h3>
+        <div class="price">$149<span>/mo</span></div>
+        <ul>
+          <li>Up to 5 Inspector Accounts</li>
+          <li>Multi-user Collaboration</li>
+          <li>Priority Support</li>
+          <li>Custom Branding</li>
+        </ul>
+        <button class="btn-cta" onclick="checkout('team')">Contact Sales</button>
+      </div>
+    </div>
   </div>
-
-  <div class="plans">
-    <div class="plan-card"><h3>Pro</h3><button class="plan-cta" onclick="checkout('pro')">Subscribe</button></div>
-    <div class="plan-card"><h3>Team</h3><button class="plan-cta" onclick="checkout('team')">Subscribe</button></div>
-  </div>
-
-  <div class="credit-packs">
-    <div class="credit-card"><h3>10 Credits</h3><button class="credit-cta" onclick="buyCredits('starter')">Buy Now</button></div>
-    <div class="credit-card"><h3>25 Credits</h3><button class="credit-cta" onclick="buyCredits('standard')">Buy Now</button></div>
-    <div class="credit-card"><h3>60 Credits</h3><button class="credit-cta" onclick="buyCredits('pro')">Buy Now</button></div>
-  </div>
-
-  <div id="toast" class="toast"></div>
-
-  <script>
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.textContent = msg; t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 3000);
-    }
-    async function buyCredits(pack) {
-        const user = auth.getUser();
-        if (!user) { showToast('⚠ Please sign in first to buy credits.'); return; }
-        
-        showToast('Connecting to PayPal...');
-        try {
-            const res = await fetch('/api/paypal-create-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-user-sub': user.sub },
-                body: JSON.stringify({ pack }),
-            });
-            const data = await res.json();
-            if (data.approveUrl) window.location.href = data.approveUrl;
-            else showToast('⚠ ' + (data.error || 'Error'));
-        } catch (e) { showToast('⚠ Network error'); }
-    }
-  </script>
 </body>
 </html>

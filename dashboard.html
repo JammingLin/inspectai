@@ -57,6 +57,7 @@
     <p class="subtitle">Quick view of your credits, reports, and latest activity.</p>
 
     <div class="stats">
+      <div class="card"><div class="stat-label">Plan</div><div class="stat-value" id="planValue" style="font-size:22px; text-transform:capitalize;">-</div></div>
       <div class="card"><div class="stat-label">Credits</div><div class="stat-value" id="creditsValue">-</div></div>
       <div class="card"><div class="stat-label">Total Reports</div><div class="stat-value" id="reportsValue">-</div></div>
       <div class="card"><div class="stat-label">Critical Issues</div><div class="stat-value" id="criticalValue">-</div></div>
@@ -78,6 +79,7 @@
       const user = JSON.parse(localStorage.getItem('inspectai_user') || 'null');
       if (!user?.token) {
         document.getElementById('reportsContainer').innerHTML = '<div class="empty">Please sign in first.</div>';
+        document.getElementById('planValue').textContent = 'free';
         document.getElementById('creditsValue').textContent = '0';
         document.getElementById('reportsValue').textContent = '0';
         document.getElementById('criticalValue').textContent = '0';
@@ -85,17 +87,20 @@
         return;
       }
 
-      const [creditsRes, reportsRes] = await Promise.all([
+      const [planRes, creditsRes, reportsRes] = await Promise.all([
+        fetch('/api/user-plan', { headers: { 'Authorization': `Bearer ${user.token}` } }),
         fetch('/api/user-credits', { headers: { 'Authorization': `Bearer ${user.token}` } }),
         fetch('/api/list-reports', { headers: { 'Authorization': `Bearer ${user.token}` } })
       ]);
 
+      const planData = await planRes.json();
       const creditsData = await creditsRes.json();
       const reportsData = await reportsRes.json();
       const reports = reportsData.reports || [];
       const totalCritical = reports.reduce((sum, r) => sum + (r.severityCounts?.critical || 0), 0);
       const latest = reports[0];
 
+      document.getElementById('planValue').textContent = planData.plan || 'free';
       document.getElementById('creditsValue').textContent = creditsData.credits ?? 0;
       document.getElementById('reportsValue').textContent = reports.length;
       document.getElementById('criticalValue').textContent = totalCritical;

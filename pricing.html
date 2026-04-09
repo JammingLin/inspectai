@@ -251,6 +251,21 @@
 
   <script>
     let isAnnual = false;
+    let currentPlan = 'free';
+
+    async function loadPlan() {
+      const user = auth.getUser();
+      if (!user?.token) return;
+      try {
+        const res = await fetch('/api/user-plan', {
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+        const data = await res.json();
+        currentPlan = data.plan || 'free';
+      } catch (e) {
+        console.warn('Failed to load plan', e);
+      }
+    }
 
     function toggleBilling() {
       isAnnual = !isAnnual;
@@ -291,12 +306,10 @@
     async function checkout(plan) {
       const user = auth.getUser();
       if (!user) { showToast('⚠ Please sign in first.', 'error'); return; }
-      showToast('Redirecting to checkout...', 'info');
-      // PayPal subscription checkout placeholder
-      // TODO: integrate subscription API when ready
-      setTimeout(() => showToast('Subscription plans coming soon!', 'info'), 1000);
+      showToast(`Current plan: ${currentPlan}. Subscription checkout wiring is next step.`, 'info');
     }
-  </script>
+
+    loadPlan();
 
 </body>
 </html>

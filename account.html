@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account — InspectAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/theme.css" />
+  <script src="/theme.js"></script>
+  <script src="/auth.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-display); min-height: 100vh; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 48px; background: var(--nav-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    .logo { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; text-decoration: none; }
+    .logo span { color: var(--accent2); }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    nav a { font-family: var(--font-mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 1px; text-transform: uppercase; }
+    nav a:hover { color: var(--accent); }
+    .container { max-width: 1000px; margin: 0 auto; padding: 120px 24px 64px; }
+    h1 { font-size: 40px; font-weight: 800; margin-bottom: 10px; }
+    .subtitle { color: var(--muted); margin-bottom: 28px; }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+    .section-title { font-size: 22px; font-weight: 800; margin-bottom: 18px; }
+    .profile { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
+    .avatar { width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; }
+    .name { font-size: 22px; font-weight: 700; }
+    .email { color: var(--muted); margin-top: 4px; }
+    .meta { display: grid; gap: 12px; margin-top: 16px; }
+    .meta-row { display: flex; justify-content: space-between; gap: 20px; padding: 12px 0; border-top: 1px solid var(--border); }
+    .meta-label { color: var(--muted); font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+    .meta-value { font-weight: 700; }
+    .plan-pill { display: inline-block; padding: 6px 12px; border-radius: 999px; background: rgba(0,212,255,0.12); color: var(--accent); font-family: var(--font-mono); font-size: 12px; font-weight: 700; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border-radius: 10px; text-decoration: none; font-family: var(--font-mono); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg); border: none; }
+    .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-danger { background: transparent; border: 1px solid var(--warn); color: var(--warn); }
+    .small-note { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .big-stat { font-size: 38px; font-weight: 800; margin: 8px 0; }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { nav { padding: 16px 20px; } }
+  </style>
+</head>
+<body onload="auth.initNav()">
+  <nav>
+    <a href="/" class="logo">Inspect<span>AI</span></a>
+    <div class="nav-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/app">Create Report</a>
+      <a href="/pricing">Pricing</a>
+      <a href="/account">Account</a>
+      <div id="authArea"></div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Account</h1>
+    <p class="subtitle">Your basic profile, credits, and billing shortcuts.</p>
+
+    <div class="grid">
+      <div class="card">
+        <h2 class="section-title">Profile</h2>
+        <div id="profileArea"></div>
+      </div>
+
+      <div style="display:grid; gap:20px;">
+        <div class="card">
+          <div class="meta-label">Current Plan</div>
+          <div class="big-stat"><span class="plan-pill" id="planValue">Free</span></div>
+          <p class="small-note">Subscription sync is not fully wired yet. This page shows the current baseline account state.</p>
+        </div>
+
+        <div class="card">
+          <div class="meta-label">Credits</div>
+          <div class="big-stat" id="creditsValue">-</div>
+          <p class="small-note">Need more usage? Buy credits or upgrade when you're ready.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="/pricing">Buy Credits</a>
+            <a class="btn btn-secondary" href="/dashboard">Open Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function signOutHere() {
+      auth.signOut();
+    }
+
+    async function loadAccount() {
+      const user = auth.getUser();
+      const profileArea = document.getElementById('profileArea');
+      const creditsValue = document.getElementById('creditsValue');
+
+      if (!user?.token) {
+        profileArea.innerHTML = `
+          <div class="small-note">You're not signed in yet.</div>
+          <div class="actions"><a class="btn btn-primary" href="/app">Sign In</a></div>
+        `;
+        creditsValue.textContent = '0';
+        return;
+      }
+
+      let credits = 0;
+      try {
+        const res = await fetch('/api/user-credits', {
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+        const data = await res.json();
+        credits = data.credits ?? 0;
+      } catch (e) {
+        console.warn('Failed to load credits', e);
+      }
+
+      creditsValue.textContent = credits;
+      profileArea.innerHTML = `
+        <div class="profile">
+          <img class="avatar" src="${user.picture || ''}" alt="${user.name || 'User'}" referrerpolicy="no-referrer" />
+          <div>
+            <div class="name">${user.name || 'InspectAI User'}</div>
+            <div class="email">${user.email || 'No email'}</div>
+          </div>
+        </div>
+
+        <div class="meta">
+          <div class="meta-row">
+            <div class="meta-label">User ID</div>
+            <div class="meta-value">${user.id || '-'}</div>
+          </div>
+          <div class="meta-row">
+            <div class="meta-label">Auth Provider</div>
+            <div class="meta-value">Google</div>
+          </div>
+          <div class="meta-row">
+            <div class="meta-label">Current Credits</div>
+            <div class="meta-value">${credits}</div>
+          </div>
+          <div class="meta-row">
+            <div class="meta-label">Plan</div>
+            <div class="meta-value">Free / Placeholder</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn btn-primary" href="/pricing">Manage Billing</a>
+          <a class="btn btn-secondary" href="/reports.html">My Reports</a>
+          <button class="btn btn-danger" onclick="signOutHere()">Sign Out</button>
+        </div>
+      `;
+    }
+
+    loadAccount();
+  </script>
+</body>
+</html>

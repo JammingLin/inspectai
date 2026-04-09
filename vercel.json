@@ -23,6 +23,7 @@
     { "source": "/app", "destination": "/app.html" },
     { "source": "/app.html", "destination": "/app.html" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/account", "destination": "/account.html" },
     { "source": "/pricing", "destination": "/pricing.html" },
     { "source": "/(.*)", "destination": "/$1" }
   ]

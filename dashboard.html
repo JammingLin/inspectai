@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — InspectAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/theme.css" />
+  <script src="/theme.js"></script>
+  <script src="/auth.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-display); min-height: 100vh; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 48px; background: var(--nav-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    .logo { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; text-decoration: none; }
+    .logo span { color: var(--accent2); }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    nav a { font-family: var(--font-mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 1px; text-transform: uppercase; }
+    nav a:hover { color: var(--accent); }
+    .container { max-width: 1100px; margin: 0 auto; padding: 120px 24px 64px; }
+    h1 { font-size: 40px; font-weight: 800; margin-bottom: 10px; }
+    .subtitle { color: var(--muted); margin-bottom: 32px; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+    .stat-label { color: var(--muted); font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .stat-value { font-size: 34px; font-weight: 800; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: 10px; text-decoration: none; font-family: var(--font-mono); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg); }
+    .btn-secondary { border: 1px solid var(--border); color: var(--text); }
+    .section-title { font-size: 24px; font-weight: 800; margin-bottom: 16px; }
+    .reports-list { display: grid; gap: 14px; }
+    .report-item { display: flex; justify-content: space-between; gap: 16px; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+    .report-meta { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    .empty { color: var(--muted); text-align: center; padding: 40px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+    .loading { color: var(--muted); }
+    @media (max-width: 900px) { .stats { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { nav { padding: 16px 20px; } .stats { grid-template-columns: 1fr; } .report-item { flex-direction: column; align-items: flex-start; } }
+  </style>
+</head>
+<body onload="auth.initNav()">
+  <nav>
+    <a href="/" class="logo">Inspect<span>AI</span></a>
+    <div class="nav-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/app">Create Report</a>
+      <a href="/reports.html">My Reports</a>
+      <a href="/pricing">Pricing</a>
+      <div id="authArea"></div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Dashboard</h1>
+    <p class="subtitle">Quick view of your credits, reports, and latest activity.</p>
+
+    <div class="stats">
+      <div class="card"><div class="stat-label">Credits</div><div class="stat-value" id="creditsValue">-</div></div>
+      <div class="card"><div class="stat-label">Total Reports</div><div class="stat-value" id="reportsValue">-</div></div>
+      <div class="card"><div class="stat-label">Critical Issues</div><div class="stat-value" id="criticalValue">-</div></div>
+      <div class="card"><div class="stat-label">Latest Report</div><div class="stat-value" id="latestValue" style="font-size:20px;">-</div></div>
+    </div>
+
+    <div class="actions">
+      <a class="btn btn-primary" href="/app">+ New Report</a>
+      <a class="btn btn-secondary" href="/reports.html">View Reports</a>
+      <a class="btn btn-secondary" href="/pricing">Buy Credits</a>
+    </div>
+
+    <h2 class="section-title">Recent Reports</h2>
+    <div id="reportsContainer" class="loading">Loading...</div>
+  </div>
+
+  <script>
+    async function loadDashboard() {
+      const user = JSON.parse(localStorage.getItem('inspectai_user') || 'null');
+      if (!user?.token) {
+        document.getElementById('reportsContainer').innerHTML = '<div class="empty">Please sign in first.</div>';
+        document.getElementById('creditsValue').textContent = '0';
+        document.getElementById('reportsValue').textContent = '0';
+        document.getElementById('criticalValue').textContent = '0';
+        document.getElementById('latestValue').textContent = 'None';
+        return;
+      }
+
+      const [creditsRes, reportsRes] = await Promise.all([
+        fetch('/api/user-credits', { headers: { 'Authorization': `Bearer ${user.token}` } }),
+        fetch('/api/list-reports', { headers: { 'Authorization': `Bearer ${user.token}` } })
+      ]);
+
+      const creditsData = await creditsRes.json();
+      const reportsData = await reportsRes.json();
+      const reports = reportsData.reports || [];
+      const totalCritical = reports.reduce((sum, r) => sum + (r.severityCounts?.critical || 0), 0);
+      const latest = reports[0];
+
+      document.getElementById('creditsValue').textContent = creditsData.credits ?? 0;
+      document.getElementById('reportsValue').textContent = reports.length;
+      document.getElementById('criticalValue').textContent = totalCritical;
+      document.getElementById('latestValue').textContent = latest ? new Date(latest.createdAt).toLocaleDateString() : 'None';
+
+      const container = document.getElementById('reportsContainer');
+      if (!reports.length) {
+        container.innerHTML = '<div class="empty">No reports yet. Create your first one.</div>';
+        return;
+      }
+
+      container.className = 'reports-list';
+      container.innerHTML = reports.slice(0, 5).map(report => `
+        <div class="report-item">
+          <div>
+            <div style="font-weight:700; font-size:16px;">${report.propertyInfo?.address || 'No address'}</div>
+            <div class="report-meta">${report.propertyInfo?.inspectorName || 'No inspector'} · ${new Date(report.createdAt).toLocaleString()}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:700;">${report.totalIssues || 0} issues</div>
+            <div class="report-meta">Critical: ${report.severityCounts?.critical || 0}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    loadDashboard().catch(err => {
+      console.error(err);
+      document.getElementById('reportsContainer').innerHTML = `<div class="empty">Failed to load dashboard: ${err.message}</div>`;
+    });
+  </script>
+</body>
+</html>

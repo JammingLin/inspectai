@@ -54,6 +54,6 @@ Set these in Vercel Dashboard → Settings → Environment Variables:
 
 - [ ] Add user authentication
 - [ ] Save reports to cloud storage
-- [ ] Add payment integration (Stripe)
+- [ ] Add payment integration (PayPal credits)
 - [ ] Mobile app (React Native)
 - [ ] Integrate with existing tools (HomeGauge, Spectora)

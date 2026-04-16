@@ -108,22 +108,19 @@
       }
 
       let credits = 0;
-      let plan = 'free';
+      //彻底不使用订阅体系：只读 credits
       try {
-        const [creditsRes, planRes] = await Promise.all([
-          fetch('/api/user-credits', { headers: { 'Authorization': `Bearer ${user.token}` } }),
-          fetch('/api/user-plan', { headers: { 'Authorization': `Bearer ${user.token}` } })
-        ]);
+        const creditsRes = await fetch('/api/user-credits', {
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        });
         const creditsData = await creditsRes.json();
-        const planData = await planRes.json();
         credits = creditsData.credits ?? 0;
-        plan = planData.plan || 'free';
       } catch (e) {
         console.warn('Failed to load account data', e);
       }
 
       creditsValue.textContent = credits;
-      planValue.textContent = plan;
+      planValue.textContent = 'free';
       profileArea.innerHTML = `
         <div class="profile">
           <img class="avatar" src="${user.picture || ''}" alt="${user.name || 'User'}" referrerpolicy="no-referrer" />

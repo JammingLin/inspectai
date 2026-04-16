@@ -136,8 +136,6 @@
   <nav>
     <a href="/" class="logo">Inspect<span>AI</span></a>
     <div class="nav-links">
-      <a href="/dashboard">Dashboard</a>
-      <a href="/account">Account</a>
       <a href="/">Home</a>
       <a href="/pricing">Pricing</a>
       <div id="authArea"></div>
@@ -165,7 +163,7 @@
         <div class="plan-name">Basic</div>
         <div class="plan-price"><sup>$</sup><span class="price-val" data-monthly="29" data-annual="23">29</span><sub>/mo</sub></div>
         <p class="plan-desc">Perfect for solo inspectors just getting started with AI.</p>
-        <button class="plan-btn outline" onclick="checkout('basic')">Get Started</button>
+        <button class="plan-btn outline" onclick="buyCredits('starter')">Get Started</button>
         <hr class="plan-divider" />
         <ul class="plan-features">
           <li><span class="check">✓</span> 10 AI reports/month</li>
@@ -183,7 +181,7 @@
         <div class="plan-name">Pro</div>
         <div class="plan-price"><sup>$</sup><span class="price-val" data-monthly="49" data-annual="39">49</span><sub>/mo</sub></div>
         <p class="plan-desc">For professional inspectors who want to deliver more reports, faster.</p>
-        <button class="plan-btn primary" onclick="checkout('pro')">Start Free Trial</button>
+        <button class="plan-btn primary" onclick="buyCredits('pro')">Buy Pro Credits</button>
         <hr class="plan-divider" />
         <ul class="plan-features">
           <li><span class="check">✓</span> Unlimited AI reports</li>
@@ -200,7 +198,7 @@
         <div class="plan-name">Team</div>
         <div class="plan-price"><sup>$</sup><span class="price-val" data-monthly="149" data-annual="119">149</span><sub>/mo</sub></div>
         <p class="plan-desc">Built for growing inspection companies managing multiple inspectors.</p>
-        <button class="plan-btn outline" onclick="checkout('team')">Contact Sales</button>
+        <button class="plan-btn outline" onclick="buyCredits('team')">Contact Sales</button>
         <hr class="plan-divider" />
         <ul class="plan-features">
           <li><span class="check">✓</span> Everything in Pro</li>
@@ -251,21 +249,6 @@
 
   <script>
     let isAnnual = false;
-    let currentPlan = 'free';
-
-    async function loadPlan() {
-      const user = auth.getUser();
-      if (!user?.token) return;
-      try {
-        const res = await fetch('/api/user-plan', {
-          headers: { 'Authorization': `Bearer ${user.token}` }
-        });
-        const data = await res.json();
-        currentPlan = data.plan || 'free';
-      } catch (e) {
-        console.warn('Failed to load plan', e);
-      }
-    }
 
     function toggleBilling() {
       isAnnual = !isAnnual;
@@ -302,14 +285,7 @@
         showToast('⚠ Network error, please try again.', 'error');
       }
     }
-
-    async function checkout(plan) {
-      const user = auth.getUser();
-      if (!user) { showToast('⚠ Please sign in first.', 'error'); return; }
-      showToast(`Current plan: ${currentPlan}. Subscription checkout wiring is next step.`, 'info');
-    }
-
-    loadPlan();
+  </script>
 
 </body>
 </html>

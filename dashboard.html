@@ -87,20 +87,19 @@
         return;
       }
 
-      const [planRes, creditsRes, reportsRes] = await Promise.all([
-        fetch('/api/user-plan', { headers: { 'Authorization': `Bearer ${user.token}` } }),
+      const [creditsRes, reportsRes] = await Promise.all([
         fetch('/api/user-credits', { headers: { 'Authorization': `Bearer ${user.token}` } }),
         fetch('/api/list-reports', { headers: { 'Authorization': `Bearer ${user.token}` } })
       ]);
 
-      const planData = await planRes.json();
       const creditsData = await creditsRes.json();
       const reportsData = await reportsRes.json();
       const reports = reportsData.reports || [];
       const totalCritical = reports.reduce((sum, r) => sum + (r.severityCounts?.critical || 0), 0);
       const latest = reports[0];
 
-      document.getElementById('planValue').textContent = planData.plan || 'free';
+      //彻底不使用订阅体系：统一显示 free
+      document.getElementById('planValue').textContent = 'free';
       document.getElementById('creditsValue').textContent = creditsData.credits ?? 0;
       document.getElementById('reportsValue').textContent = reports.length;
       document.getElementById('criticalValue').textContent = totalCritical;

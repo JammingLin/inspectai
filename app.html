@@ -299,8 +299,6 @@
     <div class="logo">Inspect<span>AI</span></div>
     <div class="nav-right">
       <div class="nav-links">
-        <a href="dashboard.html">Dashboard</a>
-        <a href="account.html">Account</a>
         <a href="reports.html">My Reports</a>
         <a href="index.html">← Home</a>
       </div>
@@ -885,15 +883,11 @@
       });
     }
     
-    // Save Report to API + IndexedDB fallback
+    // Save Report to IndexedDB
     saveReportBtn.addEventListener('click', async () => {
       const analyzedPhotos = photos.filter(p => p.result);
       if (analyzedPhotos.length === 0) {
         showToast('Notice', 'Please analyze photos before saving.', 'info');
-        return;
-      }
-      if (!currentUser?.token) {
-        showToast('Login Required', 'Please sign in before saving reports.', 'error');
         return;
       }
       
@@ -925,27 +919,12 @@
             minor: reportData.filter(r => r.severity === 'minor').length,
           }
         };
-
-        const res = await fetch('/api/save-report', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${currentUser.token}`
-          },
-          body: JSON.stringify({ report, reportId })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to save report');
         
-        // local fallback/cache
-        try {
-          const db = await openDatabase();
-          await saveReportToDB(db, report);
-        } catch (e) {
-          console.warn('Local cache save skipped:', e);
-        }
+        // Save to IndexedDB
+        const db = await openDatabase();
+        await saveReportToDB(db, report);
         
-        showToast('Saved', `Report saved. View it in "My Reports".`, 'success', 4000);
+        showToast('Saved', `Report ID: ${reportId}. View it in "My Reports".`, 'success', 4000);
         
       } catch (error) {
         console.error('Save error:', error);
